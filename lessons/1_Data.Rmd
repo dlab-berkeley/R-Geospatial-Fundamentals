@@ -1,0 +1,435 @@
+---
+title: "2_Vector_Data_Structures"
+output: html_document
+date: "2023-10-16"
+editor_options: 
+  chunk_output_type: inline
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE) 
+```
+
+# Learning Objectives
+
+Welcome to R Geospatial Fundamentals. Our goals for today's workshop are:
+
+**1. Define Geospatial data**
+
+**2. Understand the structure and components of spatial dataframes and the different geometry types**
+
+**3. Navigate different coordinate reference systems (CRS)**
+
+------------------------------------------------------------------------
+
+## **Define geospatial data**
+
+Why: Defining geospatial data establishes the basis of the type of data we are working with
+
+Geospatial data is information encoded with a specific location using coordinates. It is made of attributes (what), representing the data associated a particular location (where). These attributes could range from environmental factors to demographic details.
+
+Example: Alameda High School
+
+Attributes (what): number of students, year founded, school district etc.
+
+Location (where): 37°45'49"N 122°14'49"W
+
+![](images/Screenshot%202024-01-10%20at%208.56.20%20PM.png)
+
+[link to image](https://earth.google.com/web/search/alameda+countyAlameda+School+of+Science+and+Technology+Institute/@37.78345078,-122.26452684,6.88126536a,12712.43189645d,35y,0.00000002h,0t,0r/data=Cq0BGoIBEnwKJTB4ODA4ZjgwZDkxMTg2YWM0NToweGVlMDRmYjdhNjJkMmE1NmQZhAdy9QjkQkAhVzYYj_eRXsAqQWFsYW1lZGEgY291bnR5IEFsYW1lZGEgU2Nob29sIG9mIFNjaWVuY2UgYW5kIFRlY2hub2xvZ3kgSW5zdGl0dXRlGAIgASImCiQJeQ0TQrABQ0ARMQILYcSrQkAZLBUvKRFKXsAh7Qp9U-KrXsA6AwoBMA)
+
+\*\* geospatial data also often comes with additional data, metadata, that provides context. This could include information about where the geospatial data was obtained (the data source) or the date of last update of the data.
+
+------------------------------------------------------------------------
+
+## Examine the content of a spatial df
+
+Why: An understanding of the structure of spatial dataframes allows for accurate manipulation and analysis
+
+Let's visualize the information contained within a spatial dataframe
+
+[Load Libraries]{.underline}
+
+```{r}
+
+library(here) #provides a here() command that builds file paths from the project directory
+library(sf)
+```
+
+\*\* sf = simple features; package designed to simplify analysis of spatial data
+
+[Read in a spatial dataframe]{.underline}
+
+```{r}
+
+# Read in the data
+?st_read
+
+schools_sf = st_read(here("data", #the data is contained within a foldered called 'data', and another 'California_Schools_2019-20'
+                               "California_Schools_2019-20",
+                               "SchoolSites1920.shp")) #shp = one of the main geospatial file types (), part of a dataset
+
+#data source: https://gis.data.ca.gov/datasets/f7f818b0aa7a415192eaf66f192bc9cc
+```
+
+-   The output you see is metadata. We're going to go over most of what is contained bit by bit throughout the lesson.
+
+-   A note on filetypes: spatial data, like any other, is stored in a specific file type. The [ESRI shapefile](https://en.wikipedia.org/wiki/Shapefile) is the most widely used type of file format for storing geospatial (vector) data. It has a `.shp` file ending. This is the file we have and will read in and it is part of a collection of files, with endings `.shx`, `.dbf`, and `.prj` that need to be stored in the same location.
+
+To make to make the geospatial we just loaded more relatable, let's first see how this data is similar to a base R dataframe:
+
+------------------------------------------------------------------------
+
+## Identify congruencies between base R and spatial dataframes
+
+why: makes the transition into geospatial analysis more intuitive
+
+Working with spatial dataframes is similar to working with base R dataframes
+
+-   A spatial (or sf) dataframe retains all of the functionality of an R `data.frame`, extended with a `geometry column` and metadata about the `geometry column`.
+
+-   All spatial (vector) data has an associated `geometry column`. This column is fundamental to the definition of an sf dataframe.
+
+-   The sf package provides additional capabilities for handling and processing this 'extended', spatial component of the spatial dataframe
+
+-   This makes it possible to process your data using both standard table-based operations and explicitly geospatial operations from the `sf` library.
+
+Let's explore some basic aspects of a spatial dataframe.
+
+[Explore spatial dataframe]{.underline}
+
+```{r}
+
+#Look at the type of R objects as sf dataframe is 
+class(schools_sf)
+
+#View the dataframe (and see its similarities to a base R dataframe)
+View(schools_sf) 
+
+#Look at the size of the dataframe
+dim(schools_sf) 
+
+```
+
+```{r}
+
+#look at the first 5 rows of the dataframe
+head(schools_sf)
+```
+
+All the standard R operations that work on a base R dataframe will also work on an sf, spatial dataframe.
+
+```{r}
+
+# Look at all the variables included in our data
+colnames(schools_sf) 
+```
+
+When referencing geospatial data (like the `schools_sf` dataframe)
+
+-   columns containing data = `attributes`
+
+-   rows = `features`, and each feature has associated `geometry column`
+
+🔔 **Question**: What are some base R dataframe functions are applicable to spatial dataframes (think of one we haven't used yet)
+
+------------------------------------------------------------------------
+
+## Identify the different geometry types
+
+Why: recognizing different geometry types, thus the distinct spatial characteristics of each type, allows for nuanced [representation]{.underline} of various geographic features.
+
+There are three main types of geometries that can be associated with a spatial dataframe: `points`, `lines` and `polygons`:
+
+![](https://datacarpentry.org/organization-geospatial/fig/dc-spatial-vector/pnt_line_poly.png)
+
+The `geometry column` defines the type and location of the geometry. This is what allows us to map the data.
+
+[Explore the geometries of spatial dataframes]{.underline}
+
+```{r}
+
+#view the geometric information of this spatial dataframe 
+st_geometry(schools_sf) 
+schools_sf$geometry 
+```
+
+This summary of the information pertaining to the geometry includes information such as
+
+-   number of `features` (or rows)
+
+-   the type of geometry---`point`---referring to the location of the schools
+
+-   the dimension is the coordinate system that describes the data. Here the are 2 dimensions (2-D): the X and Y axis. we can have 3D: XYZ, where Z is elevation
+
+-   the bounding box is the outer limits in the coordinate system (XY) that contain, or bound, the data. This represents the geographic scope covered by the dataset
+
+-   CRS: which we will cover in the next section
+
+-   First 5 geometries
+
+The three main types of geometries (`point`, `line`, `polygon`) have their multi-equivalents (`multiline`, `multipoint`, & `multipolygon`). These account for irregular or complex shapes, disconnected or intersecting boundaries etc. Let's explote some of these more complex geometries:
+
+------------------------------------------------------------------------
+
+## 🥊 Challenge 1: Exploring More Complex Geometry Types
+
+1.  Read in the California Counties shapefile; 'CaliforniaCounties.shp' and store it as a variable 'counties'.
+    -   The data is found in the 'data' folder, 'california_counties' sub-folder.
+2.  Explore the dataset
+3.  dentify the names of 3 columns in the dataset
+4.  Determine the geometry type
+
+[Explore complex geometries]{.underline}
+
+```{r}
+# YOUR CODE HERE
+
+```
+
+[Solution]{.underline}
+
+```{r}
+
+#read in the counties shapefile
+counties = st_read(dsn = here("data",  #dsn= data source name
+                              "california_counties", 
+                              "CaliforniaCounties.shp"))
+
+#look at the first few rows of the data
+head(counties)
+
+#identify the column names 
+colnames(counties)
+
+# identify the geometry type
+counties$geometry
+#or
+st_geometry(counties)
+
+#data source: 
+```
+
+🔔 **Question**: Why would data based on county boundaries be best represented as a multipolygon?
+
+------------------------------------------------------------------------
+
+## **Navigating Coordinate Reference Systems**
+
+why: understanding coordinate reference systems which involved encoding, transformations, and selection, ensures accurate integration of spatial data from various sources.
+
+A coordinate reference system (CRS) is a system for associating a position on the surface of the Earth, with numerical coordinates. The 'center of the earth is 0 degrees longitude (prime meridian), and 0 degrees latitude (equator).
+
+![](images/prime-meridian-equator-world-map.webp)
+
+[Link to image](https://www.geographyrealm.com/zero-degrees-latitude-and-zero-degrees-longitude/)
+
+There are many different CRS's and types of CRS's because the Earth is a complex surface with curvature and elevation. In representing these 3-dimensional aspects via a 2-dimensional map, various aspects become distorted. Additionally, maps change as our understanding of the earth evolves, and different types of maps better represent different aspects of the Earth.
+
+Let's explore two distinct types CRS'
+
+------------------------------------------------------------------------
+
+### A. Geographic vs. projected CRS
+
+![](images/grid2.png)
+
+[link to image](https://www.esri.com/arcgis-blog/products/arcgis-pro/mapping/gcs_vs_pcs/)
+
+Geographic Coordinate System:
+
+-   designed to maintain the shape of continents
+
+-   uses latitude and longitude to specify locations on the Earth's surface.
+
+-   suitable for global references and large-scale datasets
+
+-   uses angular units; degrees
+
+Projected Coordinate System:
+
+-   designed for accurate representation of distances, areas, angles and shapes
+
+-   uses x and y coordinates on a flat surface for mapping.
+
+-   suitable for mapping and navigation
+
+-   uses linear units; feet, meters etc.
+
+-   All map projections introduce distortion in area, shape, distance or direction
+
+-   Various projection methods are used to preserve specific properties, such as area, shape, distance, or direction, depending on the application requirements.
+
+### B. CRS Codes
+
+Why: knowing how to reference (encode) the coordinate reference system of your input data allows you to accurately manipulate and integrate the data.
+
+CRSs are referenced by a common names and, in software, by numeric codes, often called EPSG codes. Different CRS's are more suited for different types of data. For instance:
+
+-   global applications benefit from geographic CRS like WGS84 (EPSG 4326)
+
+-   regional analyses, such as census data interpretation, often use localized geographic CRS like NAD83 (EPSG 4269).
+
+-   projected CRS, such as Web Mercator WGS 84 (EPSG 3857), are ideal for online maps
+
+-   state-specific CRS like CA Albers Equal Area (EPSG 3310) cater to localized precision in areas like California.
+
+Let's see some instances where different CRS's are used:
+
+[View CRS Codes]{.underline}
+
+```{r}
+
+#view the CRS of the spatial dataframe
+st_crs(counties)
+```
+
+CRS: "Projected CRS: NAD83 / California Albers"
+
+-   based on satellites and survey data
+
+-   best fit for USA, specifically California
+
+-   used for numerous federal datasets, like Census data
+
+```{r}
+
+#view the CRS of the spatial dataframe
+st_crs(schools_sf)
+```
+
+CRS: "Geodetic CRS: WGS 84"
+
+-   a three-dimensional coordinate system (latitude, longitude, and ellipsoidal height)
+
+-   accounts for earths curvature and shape- represented by an ellipsoid
+
+-   best suited for global-scale representation and analysis
+
+-   commonly used in GPS systems and mapping applications worldwide
+
+```{r}
+
+#another way to view the CRS codes
+#view the spatial dataframe goemetry, include the CRS code
+st_geometry(counties)
+```
+
+------------------------------------------------------------------------
+
+### C. CRS Reprojections
+
+Why: reprojecting the CRS of datasets allows you to integrate the analysis of datasets with different CRS's.
+
+Let's reproject the CRS of our data such that they match and can be analyzed together.
+
+[Check and transform CRS Codes]{.underline}
+
+```{r}
+
+#First, get CRS of the spatial dataframe 
+st_crs(schools_sf) #WGS84
+st_crs(counties) #NAD83
+
+#check if the CRS's are the same
+st_crs(schools_sf) == st_crs(counties) 
+
+```
+
+[Change the CRS to a known CRS based on the EPSG code]{.underline}
+
+```{r}
+
+# change the CRS of the schools spatial dataframe to a different CRS based on a known EPSG code
+# Say we know that NAD83 has EPSG 4269
+schools_sf_4269 = st_transform(schools_sf, crs = 4269) 
+
+st_crs(schools_sf_4269)
+```
+
+[Change the CRS based on CRS of another spatial dataframe]{.underline}
+
+```{r}
+
+# change the CRS of the schools spatial dataframe to match the counties dataframe
+schools_sf_NAD83 = st_transform(schools_sf, crs= st_crs(counties))
+
+```
+
+```{r}
+
+#check if the CRS's are the same
+st_crs(schools_sf_4269) == st_crs(schools_sf_NAD83)
+st_crs(schools_sf_NAD83) == st_crs(counties) 
+
+```
+
+🔔 **Question**: Why do you think the second logic expression is FALSE?
+
+Assigning a CRS of one dataframe based on the CRS of another dataframe is preferred when trying to do analysis with multiple dataframes because although data may assigned the same CRS (like in the first example) they could have very slightly different CRS metadata that could cause an error later on.
+
+So far, we've dealt with 'preformated' data, that comes as a spatial dataframe already. Let's work on creating a spatial dataframe, including assigning CRS's
+
+------------------------------------------------------------------------
+
+## Creating a Spatial dataframe
+
+Why: broadens access to data that can be analyzed geospatially
+
+There are various sources of spatial data, [USGS](https://earthexplorer.usgs.gov/), [EJ Screen](https://www.epa.gov/ejscreen), a countrywide census, [NASA](https://www.earthdata.nasa.gov/learn/gis), and an internet search of 'geospatial data for X data in Y location', etc. that come formatted for direct use (e.g. come as a .shp file).
+
+In other instances, you may have spreadsheet data that needs to be converted into a spatial dataframe. Spreadsheet data, like data saved in a .csv file format, can be transformed in to a spatial dataframe give 2 pieces of information:
+
+-   the data contains columns that specifying the point coordinates associated with each attribute
+
+-   the CRS of the data
+
+We can use the function `st_as_sf` to transform spreadsheet data, or a base R dataframe, into an `sf` spatial dataframe.
+
+[Create a spatial dataframe from a CSV file]{.underline}
+
+```{r}
+
+#read in a CSV file containing information on schools in Alameda county
+alameda_schools_df <- read.csv(here("data",
+                                    "alameda_schools",
+                                    "alco_schools.csv"))
+
+#view the contents of the dataframe
+View(alameda_schools_df)
+```
+
+```{r}
+
+#set the CRS of the dataframe
+?st_as_sf
+alameda_schools_sf <- st_as_sf(schools_df, 
+                       coords = c('X','Y'), #column names containing location data
+                       crs = 4326) #known CRS of the data 
+```
+
+[Save a spatial dataframe]{.underline}
+
+the `st_write` function allows you save data as a spatial dataframe
+
+```{r}
+
+# Save to shapefile, deleting existing file if present
+st_write(alameda_schools_sf, 
+         here("data", #stating where we want to save the data
+              "alameda_schools.shp"),
+         delete_dsn = T) #this allows us to overwrite the existing alameda_county files 
+
+#note the .dbf, .prj, .shx files that are also created
+```
+
+Other geospatial file types include [.geojson](https://geojson.org/) or .[gpkg](https://www.geopackage.org/). Read more to understand benefits and nuances of these different file types.
+
+------------------------------------------------------------------------
+
+## Key Points
+
+-   What defines a spatial dataframe is that each feature (row) in the dataset, has an associated `geometry column` that encodes the location (a point, line or polygon) over which the data stored in the columns (attributes) is applicable
+-   There various ways to project the complex surface of the earth results in different coordinate reference systems (CRS's) --- Knowing the CRS of your data and which CRS's are most applicable in your given context enables accurate data manipulation and integration
+
+Now that we understand the foundation of geospatial data, let's visualize the data

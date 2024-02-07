@@ -1,0 +1,675 @@
+---
+title: "Raster"
+output: html_document
+date: "2024-01-29"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Learning Objectives
+
+Welcome to R Geospatial Fundamentals. Our goals for today's workshop are:
+
+1.  Learn basic raster concepts (rephrase)
+2.  create combined raster-vector maps COMBINE integrate raster and vector datasets and perform combined analyses
+3.  integrate datasets vs. combined analyses (w/ integrated datasets)
+
+------------------------------------------------------------------------
+
+## Raster
+
+Raster data is a type of spatial data representation that divides a geographic area into a regular grid of cells or pixels.
+
+Each cell or pixel represents a location. Many maps you may have interfaced with are raster data.
+
+![](images/shaded-relief-raster-GIS-data-detal.webp)
+
+[image source](https://www.geographyrealm.com/geodatabases-explored-vector-and-raster-data/)
+
+Each cell has a value that represents the measurement of interest or attribute
+
+-   this could be categorical data like type of vegetation or numerical data like amount of rainfall
+
+![](images/integer.jpg)
+
+![](images/Floating.jpg)
+
+Unlike vector data, which uses points, lines, and polygons to represent features, raster data organizes information in a grid
+
+-   imagine each point feature below (top left) represents the location of a school in Alameda county with all the associated information (type of school e.g. continuing education, \# of students, etc.). Now visualize how that same information is contained in the respective cell below (top right)
+
+![](images/convertingdatamodels2.png)
+
+Raster data is well-suited for representing continuous phenomena such as elevation, temperature, rainfall or satellite imagery.
+
+Let's explore, plot and analyze some raster data:
+
+------------------------------------------------------------------------
+
+## Explore the Raster Data Structure
+
+The `raster` package contains the functions required to read in and operate on a raster file
+
+[Load the libraries]{.underline}
+
+```{r, message=F, warning=F}
+
+library(raster) # reading in and operating on rasters
+
+library(sf)     # simple features objects and methods
+library(tmap)   # mapping spatial objects
+library(here)   # build paths from folder with .rproj file
+```
+
+The type of raster data we will be dealing with for much of this workshop is called a "Digital Elevation Model" which is a representation of earths surface using information about the elevation or height of the land at different locations.
+
+The `raster` package uses the `raster()` function to read in raster data
+
+[read in the data]{.underline}
+
+```{r}
+
+#read in a Bay Area DEM (Digital Elevation Model)
+sf_DEM <- raster(here("data",
+                         "san_francisco-e.DEM"))
+#data source: http://www.webgis.com/terr_pages/CA/dem1/sanfrancisco.html)
+```
+
+[explore the data structure]{.underline}
+
+```{r}
+
+#see the Class of the raster data 
+class(sf_DEM)
+#OR
+
+#see a summary 
+sf_DEM
+```
+
+Understanding the metadata output
+
+-   a **`RasterLayer`** is the R class specifically designed for handling raster data
+-   `dimensions` are the number of cells (row by columns)
+-   `resolution` is the cell-size. resolution tells us how much real-world distance each pixel in our raster data corresponds to. Resolution is expressed in the distance units of the object it represents and the units are defined based on the coordinate reference system (CRS)
+
+In a `raster` object, the data and metadata will all be saved in their own 'slots'. These are components used to organize the information contained in the `raster` file. (Think of these like subfolders in a directory). These slots are referenced, or indexed, by `@` (rather than `$` as we see more commonly).
+
+If we `View()` the raster file, we can see what is accessible via slotting.
+
+[View the sf_DEM raster file]{.underline}
+
+```{r}
+
+#view the data in a separate tab
+View(sf_DEM)
+```
+
+Note that all the aspects listed here can be accessed via slots (using `@`) Let's look at a few:
+
+[access raster slots]{.underline}
+
+```{r}
+
+#view the extent or geographic coverage/boundaries, of the data
+sf_DEM@extent
+
+#view the number of columns of the data
+sf_DEM@ncols
+```
+
+You can also access some metadata by bracketing
+
+```{r}
+
+extent(sf_DEM)
+ncol(sf_DEM)
+  
+#access the resolution of the raster data
+res(sf_DEM)
+```
+
+This resolution indicates the size of each cell in degrees in both the x (longitude) and y (latitude) direction. Each cell in the raster represents an area of approximately 0.0008333333 degrees in both the X and Y directions. Remember that the Earth is divided into degrees of latitude and longitude. There are 360 degrees of longitude around the Earth, and 180 degrees of latitude from the North Pole to the South Pole.
+
+Here is a visualization of different resolutions in meters:
+
+![](images/raster_multiple_resolutions.png)
+
+[image source](https://www.neonscience.org/resources/learning-hub/tutorials/raster-res-extent-pixels-r)
+
+Let's now view the data itself to understand what each cell represents. One can visualize the actual data values contained in the raster data cells by using square brackets
+
+[View contents of raster data file]{.underline}
+
+```{r}
+
+#View the elevation values of each cell
+sf_DEM[,]
+```
+
+Each of these values represent the height or elevation of each cell.
+
+![](images/Raster_Elevation.jpg)
+
+[image source](https://www.csun.edu/~dlb10399/Docs/Geog306_Spring09/Lectures/Lecture6.306_09.pdf)
+
+The units of elevation is defined by the CRS
+
+[View the raster CRS to detemine the units of elevation]{.underline}
+
+```{r}
+
+#View the raster CRS
+st_crs(sf_DEM)
+```
+
+The `LENGTHUNIT["metre"` tells us that the elevation is in meters.
+
+Descriptive statistics are helpful for understanding the data in a summarized format.
+
+[get descriptive statistics]{.underline}
+
+```{r}
+
+# get some statistics on the elevation of San Francisco
+summary(sf_DEM)
+freq(sf_DEM)
+range(sf_DEM)
+#plot a histogram of the distribution of elevation in San Francisco
+hist(sf_DEM)
+
+```
+
+🔔 **Question**: What are some differences between the structure of vector data and that of raster data?
+
+Just like with vector data, we can also create quick plots of our raster data to visualize what it contains
+
+[create a quick plot of the raster data]{.underline}
+
+```{r}
+
+#plot the elevation of land in san francisco
+plot(sf_DEM)
+```
+
+🔔 **Question**: Consider that this is a sort of aerial view of San Francisco: where is the Bay? where are the mountains?
+
+We can also think about these different elevations on the basis of a census tract. We can overlay different types of data, like the vector data of the San Francisco census tracts, onto the DEM of San Francisco.
+
+These different layers can be linked dynamically to explore associations and build complex models of the real world. For instance, they can help us answer questions like 'how wheelchair navigable are schools, in the different census tracts, based on the elevation per tract'.
+
+Here is an example of what we are capable of doing by linking multiple layers:
+
+![](images/gis_layers_displayed.webp)
+
+In this image the streets, elevation, land usage, etc. would be different datasets - each one is a layer.
+
+Let's go through a brief example of building one of these layers
+
+------------------------------------------------------------------------
+
+## Layering Geospatial Data
+
+Combining multiple types of data (e.g a raster DEM with the vector polygon signifying census tract boundaries) into one composite object e.g. layering, is beneficial because it:
+
+-   integrates diverse geospatial information into a single unit which may be more efficient to analyze and manage
+
+-   provides a consolidated view of relevant spatial information
+
+Let's go through a few methods that enable accurate layering:
+
+------------------------------------------------------------------------
+
+### Reprojecting Raster Data
+
+To build layers we must first ensure they are in the same coordinate reference system
+
+[Read in San Francisco Census Tracts data]{.underline}
+
+```{r}
+
+# read in California sf_tracts vector dataset 
+sf_tracts = st_read(dsn = here("data", 
+                              "sf_tracts", 
+                              "sftracts_wpop.shp"))
+```
+
+[reproject vector data into raster CRS]{.underline}
+
+```{r}
+
+#check out the raster CRS
+st_crs(sf_DEM)
+
+# Reproject sf_tracts data to our DEM CRS
+sf_tracts_NAD27 = st_transform(sf_tracts, st_crs(sf_DEM))
+```
+
+we can also reproject the raster DEM using `projectRaster()`.
+
+⚠️ **Warning**: Generally, we would reproject the `sf_DEM` into the crs of choice using `st_crs(sf_tracts)`. However, due to updates in syntax within different packages (e.g. between `raster` and `sf` we are likely to encounter errors . So, to prevent incompatabilities between the raster (`sf_DEM`) and the sf (`sf_tracts`) datasets, we will instead using `proj4string`
+
+`proj4string` is a property associated with spatial objects that gives more error-proof information on a CRS
+
+[reproject raster data into an sf vector CRS]{.underline}
+
+```{r}
+
+# check the sf_tracts CRS
+st_crs(sf_tracts)
+
+#rename the object with the CRS
+sf_tracts_NAD83 <- sf_tracts
+
+# Check proj4string
+st_crs(sf_tracts_NAD83)$proj4string
+
+# Use the proj4string to reproject the DEM
+sf_DEM_NAD83 = projectRaster(sf_DEM, projectExtent(sf_DEM, st_crs(sf_tracts_NAD83)$proj4string))
+```
+
+⚠️ **Warning**: We need to be careful when working between the `raster` and `sf` packages, because `raster` is an older package and still depends on a previous iteration of the `sf` package (`sp)`.
+
+Now let's visualize these two layers together:
+
+[overlay plot the raster DEM and vector sf_tracts data]{.underline}
+
+```{r}
+
+#overlay plot the two layers
+plot(sf_DEM_NAD83)
+plot(sf_tracts_NAD83$geometry, col=NA, add=T)
+```
+
+------------------------------------------------------------------------
+
+### Extent, Cropping and Masking (rephrase)
+
+Note that the DEM covers a much larger geographic area than the census tract data. To see this numerically, recall that the `extent` of a spatial object represents the geographic coverage/boundaries, of the data.
+
+Let's view and manipulate the extent's of our two datasets to make it easy to analyze them together:
+
+**Extent**
+
+[view the extent of raster and vector data]{.underline}
+
+```{r}
+
+# view the extent of the raster DEM
+sf_DEM_NAD83@extent 
+```
+
+```{r}
+
+#view the extent of the vector sf_tracts data
+extent(sf_tracts_NAD83) # note the difference in the syntax
+```
+
+These datasets cover different geographic boundaries. We can modify our overlay plot such that the data are constrained to the same geographic `extent`
+
+[overlay plot the raster DEM and vector sf_tracts data within the same extent]{.underline}
+
+```{r}
+
+#plot the two datasets within the same extent
+plot(sf_DEM_NAD83, ext=extent(sf_tracts_NAD83))
+plot(sf_tracts_NAD83$geometry, col=NA, add=T)
+```
+
+**Cropping**
+
+We can also `crop()` the DEM data. cropping creates a subset of the data that is limited to the specified `extent`. Therefore, we can limit the DEM data to the `extent` of the census tract data.
+
+```{r}
+
+sf_DEM_NAD83_crop <- crop(sf_DEM_NAD83, sf_tracts_NAD83)
+
+plot(sf_DEM_NAD83_crop)
+plot(sf_tracts_NAD83$geometry, col=NA, add=T)
+```
+
+🔔 **Question**: What is the difference between the methods used to create the two plots above?
+
+Some tasks during spatial analyses are helpful for improving the visual understanding of our data, especially during exploratory data analysis. Other tasks are better suited for modifying different spatial datasets to allow for accurate, integrated, quantitative analyses. These two plots show the same thing, but the latter creates a new object `sf_DEM_NAD83_crop` that is limited to the extent of the census tract data, which may be useful for future analyses, whereas the former is only a visulization.
+
+Visually, the cropped plot is more comprehensive than the full plot of both datasets. Analytically, we may want to only maintain the portion of the `DEM` that is within San Francisco county (e.g. omit the top portions of the map that represent Marin county, but fall within the geographical `extent` of the San Francisco census tract. `Masking` restricts raster cells to a specific area defined by a `mask`. The mask is typically a spatial object, such as a polygon, which is used to subset or clip the raster data to a specific region of interest.
+
+![](images/lake_district_mask.png)
+
+[image source](https://snorfalorpagus.net/blog/2014/11/09/masking-rasterio-layers-with-vector-features/)
+
+Let's `mask` the DEM by restricting it to only the boundaries of the census tracts dataset.
+
+**Masking**
+
+```{r}
+
+#mask the DEM to the census tract
+sf_DEM_NAD83_masked = mask(sf_DEM_NAD83, sf_tracts_NAD83)
+
+```
+
+```{r}
+
+#overlay plot the masked DEM with the census polygon
+plot(sf_DEM_NAD83_masked)
+plot(sf_tracts_NAD83$geometry, col=NA, add=T)
+```
+
+The portion of the DEM outside of the San Francisco census tract is no longer included. However, visualizing this is not easy. Recall that there are various ways to visualize geospatial data, including using `tmap` or `ggplot2`.
+
+Let's visualize the same data using `tmap`:
+
+[plot raster data using tmap]{.underline}
+
+```{r}
+
+#overlay plot the masked DEM with the census polygon
+map_1 <- tm_shape(sf_DEM_NAD83_masked) +
+  tm_raster() +
+tm_shape(sf_tracts_NAD83) + 
+  tm_borders()
+map_1
+
+# Set mode to interactive
+tmap_mode("view")
+```
+
+Note that the upper regions (like Marin) are no longer included.
+
+------------------------------------------------------------------------
+
+## 🥊 Challenge 1: Plotting San Francisco Schools within the Masked San Francisco DEM
+
+In this challenge, we will make some connections between masking a raster data, and the equivalent in vector data.
+
+1.  Load in the schools dataset as `schools_sf`
+
+2.  reproject it into the same CRS as our census tract data (if needed). Save this as `schools_sf_NAD83`
+
+3.  subset the school dataset by selecting only for schools in `"San Francisco"` county.
+
+    1.  hint 1: use the `colnames()` function to identify the column name that contains the county name.
+
+    2.  hint 2: look back at previous script for help
+
+4.  Plot the San Francisco DEM using `tmap` and overlay both the masked census tract data, as well as the schools in San Francisco county. Save this as map_2
+
+5.  Identify the name of the schools that falls outside of the San Francisco census tract
+
+6.  Remove (or mask) the schools that fall outside of the San Francisco census tract
+
+    1.  hint: use `st_intersect`
+
+7.  Plot the San Francisco DEM, and overlay both the masked census tract data, as well as the schools in the san Francisco census tract (versus the county in map 2). Save this as map_3
+
+solution
+
+```{r}
+
+schools_sf = st_read(dsn =here("data",
+                               "California_Schools_2019-20",
+                               "SchoolSites1920.shp"))
+
+schools_sf_NAD83 = st_transform(schools_sf, st_crs(sf_tracts_NAD83))
+
+#subset only the schools in San Francisco county
+san_fran_schools_NAD83 <- schools_sf_NAD83[schools_sf_NAD83$CountyName == "San Francisco", ]
+
+
+map_2 <- tm_shape(sf_DEM_NAD83_masked) +
+  tm_raster() +
+tm_shape(sf_tracts_NAD83) + 
+  tm_borders()+
+  tm_shape(san_fran_schools_NAD83) + 
+  tm_dots()
+map_2
+
+
+san_fran_schools_NAD83_intersect <- st_intersection(san_fran_schools_NAD83, sf_tracts_NAD83)
+
+
+map_3 <- tm_shape(sf_DEM_NAD83_masked) +
+  tm_raster() +
+tm_shape(sf_tracts_NAD83) + 
+  tm_borders()+
+  tm_shape(san_fran_schools_NAD83_intersect) + 
+  tm_dots()
+map_3
+
+```
+
+🔔 **Question**: Are there similarities between the `mask` and the `st_intersects` functions?
+
+Understanding similarities between functions that operate on base R dataframes, geospatial dataframes, vector data, and raster data allow us to work across these various types of data seamlessly. Lets continue to integrate analyses across raster and vector type datasets.
+
+------------------------------------------------------------------------
+
+## Combined Spatial Queries (Spatial Joins & Aggregations)
+
+At this stage you have a solid understanding of both vector and raster data types. In this next stage, we will focus mainly on analyses, by introducing two new operations (`extract()`, `st_join`, and `reclassify`). We will also focus on integrating your existing knowledge of functions in R to spatial data. One goal here is just to give you a snippet of the types of operations you can perform with your knowledge of spatial data.
+
+------------------------------------------------------------------------
+
+### Extracting
+
+`Extract` is specifically a function used on a combination of raster and vector data. `Extract` returns the values of the DEM raster object (e.g. the elevation) of the cells that either (A) point data falls inside of, (B) line data touches, or (C) polygon data binds. Let's see what this means for a polygon object (the census data) :
+
+[read more about the function]{.underline}
+
+```{r}
+
+?extract
+```
+
+```{r}
+
+San_Fran_elevation <- extract(sf_DEM_NAD83_masked, sf_tracts_NAD83)
+View(San_Fran_elevation)
+
+```
+
+For each census tract, `extract` has returned all the elevation values within that tract. We can check this by visualizing some of the structure of the datasets.
+
+```{r}
+
+length(San_Fran_elevation)
+nrow(sf_tracts_NAD83)
+```
+
+🔔 **Question**: Can you tell the difference between masking and extracting?
+
+Masking returns a new raster object that only includes cells within the specified mask while extracting returns values extracted from raster cells at locations specified by the vector geometry.
+
+We can also include computations into the `extact` function.
+
+[extract and average the elevations]{.underline}
+
+🔔 **Question**: before running the following script, what do you expect it to do?
+
+```{r}
+
+elev <- extract(sf_DEM_NAD83_masked, sf_tracts_NAD83, fun = mean)
+
+```
+
+⚠️ **Warning**: the extract function modifies the data structure of the contents it extracts (e.g. `elev`) (so we must first reformat the data to prevent errors
+
+```{r}
+
+# View the structure of elev 
+str(elev )
+
+elev = elev[, 1]
+# OR 
+#elev<- as.vector(elev)
+
+
+# Assign the elev vector as a column in the sf_tracts_NAD83 dataframe
+sf_tracts_NAD83$elev <- elev
+
+colnames(sf_tracts_NAD83)
+```
+
+```{r}
+
+map_4 <- 
+  tm_shape(sf_tracts_NAD83) + 
+  tm_polygons(col = "elev", palette="Greens", title = "Mean Elevation")
+map_4
+
+```
+
+🔔 **Question**: What does this image show OR how does it compare to map_1?
+
+Our sf_tracts_NAD83 sf spatial dataframe now has a column containing values computed from the DEM. This is one of the many ...
+
+## 🥊 Challenge 2: Theoretical average elevation gain of each segment of the BART line
+
+1.  Load in the `bart_lines` dataset
+
+2.  transfrom the CRS into NAD83. Name this object `bart_lines_NAD83`
+
+3.  Mask the DEM such that it only includes cell that touch the BART line. Name this object `sf_DEM_NAD83_masked_bart`
+
+4.  plot this masked DEM along with the BART lines. Save this as `map_5`
+
+5.  extract the sum of the elevations for each segment of the BART line. Name this object `bart_elev`
+
+6.  Add a column names `bart_elev` to to the `bart_lines_NAD83` dataframe
+
+7.  🔔 **Question**: What is the largest sum of elevations?
+
+Solution
+
+```{r}
+
+bart_lines <- st_read(here('data', 'transportation', 'bart_lines_2019.geojson'))
+
+bart_lines_NAD83 = st_transform(bart_lines , st_crs(sf_tracts_NAD83))
+
+#mask the DEM 
+sf_DEM_NAD83_masked_bart = mask(sf_DEM_NAD83, bart_lines_NAD83)
+
+
+
+map_5 <- tm_shape(sf_DEM_NAD83_masked_bart) +
+  tm_raster() +
+tm_shape(bart_lines_NAD83) + 
+  tm_lines()
+map_5 
+
+
+bart_elev <- extract(sf_DEM_NAD83_masked_bart, bart_lines_NAD83, fun=sum)
+
+# Assign the elev vector as a column in 
+bart_lines_NAD83$bart_elev <- bart_elev
+
+#90719.622
+```
+
+------------------------------------------------------------------------
+
+### Spatial Joins
+
+...
+
+-   [with vectors]{.underline} :
+
+    -   By default `st_join` maintains the geometries of the first data.frame input to the operation (i.e. the geometries of `x`).
+
+-   [combined]{.underline} : Add elevation to Vector object
+
+```{r}
+
+
+```
+
+------------------------------------------------------------------------
+
+### Spatial Aggregations
+
+[vector]{.underline}:
+
+An **aggregation** is another way we can generate new data from this relationship. In this case, for each feature in one dataset we find all the features in another dataset that satisfy our chosen spatial relationship query with it (e.g. within, intersects), then aggregate one or more of the joined output variables using some summary function (e.g. count, mean).
+
+[combined]{.underline}:
+
+Average Raster value by Vector shape
+
+```{r}
+
+```
+
+NAME
+
+-   Calculations across raster layers (using bricks)
+
+```{r}
+
+```
+
+------------------------------------------------------------------------
+
+### Reclassification
+
+When working with either categorical or continuous data, we may want to reclassify our data. Think of creating a histogram and editing the bin ranges and sizes - that's the idea behind reclassifying data.
+
+We may want to reclassify our data because:
+
+-   Our original data has more classifications than we actually need for our analysis.
+-   We want to represent the classifications we do have by a different numerical scheme because it somehow makes our analysis more convenient.
+
+![](images/y4816e1w.jpg)
+
+[image source](https://www.fao.org/3/y4816e/y4816e0g.htm)
+
+```{r}
+
+```
+
+------------------------------------------------------------------------
+
+### Raster Stacks and Bricks
+
+We can compile the various `raster layers`. This is helpful to do because
+
+-   operations on a `RasterStack` can be more convenient than working with individual `raster layers`
+
+-   A `RasterBrick` is a multi-layer raster object that is created from a single file or `RasterStack`. Computations on a `RasterBrick` are faster than on a `RasterStack`!
+
+Stacking raster layers, like those containing information about elevation, geology, and vegetation, into a brick can be the basis of suitability or suceptibility (etc.) analyses.
+
+![](images/Overlay-of-the-GIS-model-raster-data.ppm)
+
+[image source](https://www.researchgate.net/figure/Overlay-of-the-GIS-model-raster-data_fig2_367345548)
+
+[create a raster stack and a raster brick]{.underline}
+
+```{r}
+
+##need to create more DEM's and stack them. Stacking raster on vector is not as useful
+sf_DEM_tracts_schools_stack <- stack(sf_DEM_NAD83_masked) #,sf_tracts_NAD83,san_fran_schools_NAD83_intersect)
+
+# brick()
+```
+
+------------------------------------------------------------------------
+
+## 🥊 Challenge 3:
+
+------------------------------------------------------------------------
+
+## 🎬 Demo: Suitability analysis
+
+-   include buffering
+
+------------------------------------------------------------------------
+
+## Key Points
+
+\<Summary of what was learned in today's workshop.\>
+
+-   \<key point 1\>
