@@ -1,39 +1,38 @@
 # D-Lab R Geospatial Fundamentals Workshop
 
-[![DataHub](https://img.shields.io/badge/launch-datahub-blue)](DATAHUB_LINK_HERE)
-[![Binder](https://mybinder.org/badge_logo.svg)](BINDER_LINK_HERE)
+[![DataHub](https://img.shields.io/badge/launch-datahub-blue)](https://datahub.berkeley.edu/hub/user-redirect/git-pull?repo=https%3A%2F%2Fgithub.com%2Fdlab-berkeley%2FR-Geospatial-Fundamentals&urlpath=rstudio%2F&branch=main)
+[![Binder](https://mybinder.org/badge_logo.svg)](https://mybinder.org/v2/gh/dlab-berkeley/R-Geospatial-Fundamentals/HEAD?urlpath=rstudio)
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
-This repository contains the materials for D-Lab [WorkshopName] workshop. We
-recommend attending [D-LabWorkshop1](D-LabWorkshop1Link),
-[D-LabWorkshop2](D-LabWorkshop2Link), and
-[AdditionalWorkshopsAsNeeded](LinksToWorkshops) prior to this workshop.
+This repository contains the materials for D-Lab R Geospatial Fundamentals workshop. We
+recommend attending [R Fundamentals](https://github.com/dlab-berkeley/r-fundamentals),
+[R Data Wrangling](https://github.com/dlab-berkeley/R-Data-Wrangling), and
+[R Data Visualization](https://github.com/dlab-berkeley/R-Data-Visualization) prior to this workshop.
 
 Check D-Lab's [Learning Pathways](https://dlab-berkeley.github.io/dlab-workshops/python_path.html) to figure out which of our workshops to take!
 
 ## Workshop Goals
 
-In this workshop, we provide [WorkshopGoal]. First, we’ll cover [Aim1]. Then,
-we’ll explore [Aim2]. 
+In this 3-part workshop series, we will provide an introduction to spatial analyses in R. We discuss the benefits of the additional ‘location’ component that defines spatial data and how spatial dataframes organize this information. Using the sf (simple features) and terra packagesin R, we will navigate fundamental operations for reading, writing, manipulating, and visualizing spatial data.
 
-_Only if necessary:_ If you are not familiar with material in
-[D-LabWorkshop1](D-LabWorkshop1Link), [D-LabWorkshop2](D-LabWorkshop2Link), and
-[AdditionalWorkshopsAsNeeded](LinksToWorkshops), we recommend attending those
-workshops first.
+This workshop aims to equip participants with the fundamentals needed to conduct spatial analyses for their various endeavors.
 
 ## Learning Objectives
 
 After this workshop, you will be able to:
 
-- [LearningObjective1].
-- [LearningObjective2].
-- [LearningObjective3].
+- Understand different types of spatial data (points, lines, polygons, raster).
+- Use appropriate coordinate reference systems.
+- Implement classification schemes (equal intervals, quantiles and natural breaks) for improved data visualization.
+- Conduct spatial measurement queries (distance from, intersections, buffers, and finding nearest features).
+- Employ visualization techniques (overlay plotting, interactive maps).
+- Perform combined vector-raster analysis (zonal statistics).
 
 This workshop does not cover the following:
 
-- [NotCovered1]. These are covered in [D-LabWorkshopName](URL).
-- [NotCovered2]. These are covered in [D-LabWorkshopName](URL).
-
+- Basic commands R. This is covered in [R Fundamentals](https://github.com/dlab-berkeley/r-fundamentals).
+- Working with dataframes in R. This is covered in [R Data Wrangling](https://github.com/dlab-berkeley/R-Data-Wrangling).
+- Basic data visualization in R. This is covered in [R Data Visualization](https://github.com/dlab-berkeley/R-Data-Visualization).
 
 ## Installation Instructions
 
