@@ -21,11 +21,17 @@ This workshop aims to equip participants with the fundamentals needed to conduct
 
 After this workshop, you will be able to:
 
-- Understand different types of spatial data (points, lines, polygons, raster).
+Part 1
+- Understand different types of spatial data (points, lines, polygons).
 - Use appropriate coordinate reference systems.
+- Employ visualization techniques (overlay plotting, interactive maps).
+
+Part 2
 - Implement classification schemes (equal intervals, quantiles and natural breaks) for improved data visualization.
 - Conduct spatial measurement queries (distance from, intersections, buffers, and finding nearest features).
-- Employ visualization techniques (overlay plotting, interactive maps).
+
+Part 3
+- Understand different types of spatial data (Raster)
 - Perform combined vector-raster analysis (zonal statistics).
 
 This workshop does not cover the following:
