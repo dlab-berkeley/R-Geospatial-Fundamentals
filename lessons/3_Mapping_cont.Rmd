@@ -16,6 +16,22 @@ Welcome to R Geospatial Fundamentals. Our goal for today's workshop is:
 
 ------------------------------------------------------------------------
 
+Throughout this workshop series, we will use the following icons:
+
+🔔 **Question**: A quick question to help you understand what's going on.
+
+🥊 **Challenge**: Interactive exercise. We'll go through these in the workshop!
+
+⚠️ **Warning**: Heads-up about tricky stuff or common mistakes.
+
+💡 **Tip**: How to do something a bit more efficiently or effectively.
+
+📝 **Poll**: A zoom poll to help you learn.
+
+🎬 **Demo**: Showing off something more advanced so you know what you can use R for in the future
+
+------------------------------------------------------------------------
+
 # Classification schemes
 
 -   Another way to make more meaningful maps is to improve the way in which data values are associated with colors.
@@ -188,39 +204,27 @@ The heads/Tails scheme is tailored to data with a heavy-tailed distributions
 
 3.  create a combined variable named `combined_clasi_plots` that shows the 4 plots, with. columns
 
-Solution
-
 ```{r}
 
-library(tmaptools)
-
-HeadTails_clasi_plot <- tm_shape(counties) + 
-  tm_polygons(col = 'POP12_SQMI',
-              style = "headtails", #style of the break
-              alpha = 0.9,
-              title = "Population Density per mi^2 Headtails Scheme")
-HeadTails_clasi_plot
-
-# Assuming you have tmap plots named plot1, plot2, plot3, and plot4
-combined_clasi_plots <- tmap_arrange(quant_clasi_plot, nat_clasi_plot, man_clasi_plot, HeadTails_clasi_plot, ncol = 2)
-
-# View the combined plots
-combined_clasi_plots
-
+# YOUR CODE HERE
 ```
 
--   see the documentation `?classIntervals` or sources such as [Geocomputation with R](https://geocompr.robinlovelace.net/adv-map.html) ebook for more information.
+see the documentation `?classIntervals` or sources such as [Geocomputation with R](https://geocompr.robinlovelace.net/adv-map.html) ebook for more information.
 
--   other mapping packages include
+other mapping packages include
 
-    -   `mapview`: for a quick and easy interactive map
+-   `mapview`: for a quick and easy interactive map
 
-    -   `leaflet`: for highly custom interactive maps that you can output and host on a website
+-   `leaflet`: for highly custom interactive maps that you can output and host on a website
 
-    -   `shiny`: for interactive R based applications that use leaflet maps
+-   `shiny`: for interactive R based applications that use leaflet maps
 
 ------------------------------------------------------------------------
 
 ## Key Points
 
+In this section of the workshop, we looked at how
+
 -   Changing the way in which the different shades and colors of a thematic map are associated with data, via binning the data using different classification schemes, enhances the type of information that can be conveyed.
+
+In the next segment of the workshop, we will focus on spatial analyses ...

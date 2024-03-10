@@ -22,7 +22,23 @@ Welcome to R Geospatial Fundamentals. Our goals for today's workshop are:
 
 ------------------------------------------------------------------------
 
-## **Define geospatial data**
+## Throughout this workshop series, we will use the following icons:
+
+🔔 **Question**: A quick question to help you understand what's going on.
+
+🥊 **Challenge**: Interactive exercise. We'll go through these in the workshop!
+
+⚠️ **Warning**: Heads-up about tricky stuff or common mistakes.
+
+💡 **Tip**: How to do something a bit more efficiently or effectively.
+
+📝 **Poll**: A zoom poll to help you learn.
+
+🎬 **Demo**: Showing off something more advanced so you know what you can use R for in the future
+
+------------------------------------------------------------------------
+
+**Define geospatial data**
 
 Why: Defining geospatial data establishes the basis of the type of data we are working with
 
@@ -185,29 +201,6 @@ The three main types of geometries (`point`, `line`, `polygon`) have their multi
 ```{r}
 # YOUR CODE HERE
 
-```
-
-[Solution]{.underline}
-
-```{r}
-
-#read in the counties shapefile
-counties = st_read(dsn = here("data",  #dsn= data source name
-                              "california_counties", 
-                              "CaliforniaCounties.shp"))
-
-#look at the first few rows of the data
-head(counties)
-
-#identify the column names 
-colnames(counties)
-
-# identify the geometry type
-counties$geometry
-#or
-st_geometry(counties)
-
-#data source: 
 ```
 
 🔔 **Question**: Why would data based on county boundaries be best represented as a multipolygon?
@@ -429,7 +422,7 @@ Other geospatial file types include [.geojson](https://geojson.org/) or .[gpkg](
 
 ## Key Points
 
--   What defines a spatial dataframe is that each feature (row) in the dataset, has an associated `geometry column` that encodes the location (a point, line or polygon) over which the data stored in the columns (attributes) is applicable
--   There various ways to project the complex surface of the earth results in different coordinate reference systems (CRS's) --- Knowing the CRS of your data and which CRS's are most applicable in your given context enables accurate data manipulation and integration
+-   What defines a spatial dataframe is that each feature (row) in the dataset, and has an associated `geometry column` that encodes the location (a point, line or polygon) over which the data stored in the columns (attributes) is applicable
+-   There are various ways to project the complex surface of the earth results in different coordinate reference systems (CRS's) --- Knowing the CRS of your data and which CRS's are most applicable in your given context enables accurate data manipulation and integration
 
-Now that we understand the foundation of geospatial data, let's visualize the data
+Now that we understand the foundation of geospatial data, let's visualize the data ...

@@ -22,6 +22,22 @@ Welcome to R Geospatial Fundamentals. Our goals for today's workshop are:
 
 ------------------------------------------------------------------------
 
+Throughout this workshop series, we will use the following icons:
+
+🔔 **Question**: A quick question to help you understand what's going on.
+
+🥊 **Challenge**: Interactive exercise. We'll go through these in the workshop!
+
+⚠️ **Warning**: Heads-up about tricky stuff or common mistakes.
+
+💡 **Tip**: How to do something a bit more efficiently or effectively.
+
+📝 **Poll**: A zoom poll to help you learn.
+
+🎬 **Demo**: Showing off something more advanced so you know what you can use R for in the future
+
+------------------------------------------------------------------------
+
 ## Basics of plotting geospatial data
 
 One of the first things to know about your geospatial data, before getting into any plotting, is to understand the source of your data, along with the details of important information such as what defines the boundary lines and so on.
@@ -477,49 +493,6 @@ SenateCA_plot
 # YOUR CODE HERE
 ```
 
-Solution
-
-```{r}
-
-SchoolLeve_plot <- ggplot() +
-  geom_sf(data = schools_sf, aes(color = SchoolLeve)) + 
-  scale_color_manual(values = brewer.pal(8, "Dark2")) + #Qualitative  color pallette
-  theme_minimal() +
-  labs(title = "School Level")
-SchoolLeve_plot
-
-
-Charter_plot <- ggplot() +
-  geom_sf(data = schools_sf, aes(color = Charter)) + 
-  scale_color_manual(values = brewer.pal(8, "Paired")) + #Qualitative  color pallette
-  theme_minimal() +
-  labs(title = "Charter School? Y or N")
-Charter_plot
-
-
-SenateCA_plot <- ggplot() +
-  geom_sf(data = some_schools, aes(color = SenateCA)) + 
-  scale_color_manual(values = brewer.pal(8, "Set1")) + #Qualitative  color pallette
-  theme_minimal() +
-  labs(title = "California Senate District")
-SenateCA_plot
-
-
-MRpct_plot <- ggplot() + 
-  geom_sf(data=schools_sf, aes(color = MRpct)) +
-  scale_color_gradientn(colors = brewer.pal(9, "Greens")) + # Sequential greens color palette
-  theme_minimal() + 
-  labs(title = "Mixed Race Percent")
-MRpct_plot
-#or 
-MRpct_plot <- ggplot() + 
-  geom_sf(data=schools_sf, aes(color = MRpct)) +
-  scale_color_gradientn(colors = brewer.pal(9, "RdBu")) + # Diverging red-blue color palette
-  theme_minimal() + 
-  labs(title = "Mixed Race Percent")
-MRpct_plot
-```
-
 ------------------------------------------------------------------------
 
 There are two major challenges when creating thematic maps:
@@ -692,34 +665,11 @@ Percent_plot
 
 ------------------------------------------------------------------------
 
-### **Solution**
-
-```{r}
-
-counties$MULT_to_OTHER<-counties$MULT_RACE/counties$OTHER
-
-#plotting the distribution of people who identify with multiple races per county
-hist(counties$MULT_to_OTHER,
-     breaks = 40, # number of bins that the range of values is divided into
-     main = 'ratio of multi-race to other') #title 
-
-Ratio_plot <- tm_shape(counties) +
-  tm_polygons(col='MULT_to_OTHER', alpha=0.8,
-              palette="PiYG",
-              title = "... ")
-Ratio_plot 
-
-
-Tranform_plot_combined <- tmap_arrange(Count_plot, Density_plot, Percent_plot, Ratio_plot, ncol = 4)
-
-Tranform_plot_combined 
-```
-
-Transformations help with ... C**lassification schemes** can improve the way data values are associated with colors.
+**T**ransformations help with ... C**lassification schemes** can improve the way data values are associated with colors.
 
 ------------------------------------------------------------------------
 
-## Saving spatial dataframes (and plots (?))
+## Saving spatial dataframes
 
 It's helpful to be able to save data, especially if it has been made into a spatial dataframe or transformed as we did here, in a format that streamlines continued manipulation and analysis.
 
@@ -766,8 +716,14 @@ schools_plot_2 <- ggplot() +
 print(schools_plot_2)
 ```
 
+------------------------------------------------------------------------
+
 ## Key Points
 
--   Thematic maps emphasize the geographic distribution and relationships of the data that are not easily discernible using standard plots (like barplots)
+Somethings that were emphasized in today's workshop, we focused on how
+
+-   Thematic maps emphasize the geographic distribution and relationships of data that are not easily discernible using standard plots (like barplots)
 -   There are different packages that allow you to visualize geospatial data, using the `plot()` function, or the `tmap` or `ggplot2` packages. Each has different eases of use and different benefits.
--   Understanding your data and knowing what aspects you want to emphasize enable you to utilize different color palettes andtransformations to emphasize key aspects of the geographic distribution of the data.
+-   Understanding your data and knowing what aspects you want to emphasize enable you to utilize different color palettes and transformations to emphasize key aspects of the geographic distribution of the data.
+
+We'll continue to dive into different mapping techniques by looking at classification schemes next ...

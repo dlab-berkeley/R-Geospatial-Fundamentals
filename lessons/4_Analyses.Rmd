@@ -15,9 +15,31 @@ knitr::opts_chunk$set(echo = TRUE)
 Welcome to R Geospatial Fundamentals. Our goals for today's workshop
 are:
 
-1.  ...
-2.  ...
-3.  ...
+1.  **Understand spatial queries including** measurement and
+    relationship queries.
+2.  **Perform basic spatial analysis** such as calculating distances,
+    areas, and lengths within spatial datasets
+3.  **Apply proximity analysis techniques** such as creating buffers and
+    identifying nearby features
+
+------------------------------------------------------------------------
+
+Throughout this workshop series, we will use the following icons:
+
+🔔 **Question**: A quick question to help you understand what's going
+on.
+
+🥊 **Challenge**: Interactive exercise. We'll go through these in the
+workshop!
+
+⚠️ **Warning**: Heads-up about tricky stuff or common mistakes.
+
+💡 **Tip**: How to do something a bit more efficiently or effectively.
+
+📝 **Poll**: A zoom poll to help you learn.
+
+🎬 **Demo**: Showing off something more advanced so you know what you
+can use R for in the future
 
 ------------------------------------------------------------------------
 
@@ -89,7 +111,7 @@ plot(counties$geometry)
 head(counties,2)
 ```
 
-### Measurement Queries: Units
+#### Measurement Queries: Units
 
 -   When conducting measurement queries, it's essential to have
     consistent units to ensure accurate and meaningful analyses.
@@ -293,36 +315,23 @@ determine the length of a line geometry.
     Mercator, and WGS84 CRS's. (search previous text for the respective
     EPSG codes if needed).
 
-Solution
-
 [Examine lengths using different units]{.underline}
 
 ```{r}
 
-#use the 'Run current Chunk shortcut (play button on the right of the code chunk)
-
-#create a new column that contains the lengths in different units
-bart_lines$len_mi <- units::set_units(st_length(bart_lines), mi)
-bart_lines$len_km <- units::set_units(st_length(bart_lines), km)
-bart_lines$len_m <- units::set_units(st_length(bart_lines), m)
+# YOUR CODE HERE
 ```
 
 [Examine lengths using different CRS's]{.underline}
 
 ```{r}
 
-#create a new column for each version of the length measurement for the different CRS'
-bart_lines$len_NAD83 <- units::set_units(st_length(st_transform(bart_lines,26910)), m)
-bart_lines$len_WebMarc <- units::set_units(st_length(st_transform(bart_lines,3857)), m)
-bart_lines$len_WGS84 <- units::set_units(st_length(st_transform(bart_lines,4326)), m)
-
-#view the modified dataframe
-head(bart_lines)
+# YOUR CODE HERE
 ```
 
 ------------------------------------------------------------------------
 
-### Measurement Queries: Distance
+#### Measurement Queries: Distance
 
 -   The `st_distance` function can be used to find the distance between
     two geometries or two sets of geometries.
@@ -503,7 +512,7 @@ plot(Continuation_Alameda_utm10$geometry, col="red", add = T)
 
 ------------------------------------------------------------------------
 
-## 🥊 Challenge 2: Schools dis
+## 🥊 Challenge 2: Schools distance
 
 Unlike the `st_intersects()` function, `st_disjoint()` subsets the
 features in A that do not share space with B. It selects the features
@@ -520,39 +529,18 @@ that have no spatial intersection.
     county boundary in `"purple"`, and the Alameda county boundary in
     `"red"`
 
-Solution
-
 ```{r}
 
-LA_county_utm10 <- counties_utm10[counties_utm10$NAME == "Los Angeles" , ]
-
-K_12_schools_utm10 <- schools_utm10[schools_utm10$SchoolType == "K-12", ]
-
-# Select all Alameda County Schools NOT in Berkeley with the disjoint operator
-K_12_LA_utm10_disjoint <- K_12_schools_utm10[LA_county_utm10, ,op=st_disjoint]
-
-# Plot the result
-# fix : use tmap, add CA boundary 
-plot(K_12_LA_utm10_disjoint$geometry,
-     col = "blue")
-plot(LA_county_utm10, 
-     col = NA, 
-     border = "purple", 
-     add = T)
-plot(Alameda_county_utm10,
-     col = NA, 
-     border = "red", 
-     add = T)
-
+# YOUR CODE HERE
 ```
+
+------------------------------------------------------------------------
 
 [Here](https://github.com/rstudio/cheatsheets/blob/master/sf.pdf) is an
 `sf` cheatsheet that lists and briefly explains common relationship
 functions
 
 ![](images/sf_Cheatsheet.png)
-
-------------------------------------------------------------------------
 
 ------------------------------------------------------------------------
 
@@ -740,6 +728,18 @@ Berkeley_Elementary_schools_utm10[, c("SchoolName","elementary_middle_school_dis
 
 ## Key Points
 
-\<Summary of what was learned in today's workshop.\>
+In today's workshop, we focused on how
 
--   \<key point 1\>
+-   Measurement queries involve calculating distances, areas, and other
+    geometric properties within spatial datasets, such as the area of a
+    boundary (county)
+-   Spatial queries allow you to analyze how sets of geometries relate
+    to each other in space. We looked at this, for instance, through
+    using **`st_distance`** to find distances between schools and
+    transportation lines.
+-   Proximity analysis allows us to find nearby features within a
+    certain distance, like identifying schools within a certain distance
+    of transportation lines using buffers\\
+
+Next time, we will introduce ourselves to another type of geospatial
+datatype - Raster data.
