@@ -1,0 +1,284 @@
+---
+title: "Solutions"
+output: html_document
+date: "2024-03-10"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Data 
+
+[Challenge 1]{.underline}
+
+```{r}
+
+#read in the counties shapefile
+counties = st_read(dsn = here("data",  #dsn= data source name
+                              "california_counties", 
+                              "CaliforniaCounties.shp"))
+
+#look at the first few rows of the data
+head(counties)
+
+#identify the column names 
+colnames(counties)
+
+# identify the geometry type
+counties$geometry
+#or
+st_geometry(counties)
+
+#data source: 
+```
+
+# 2. Mapping
+
+[Challenge 1]{.underline}
+
+```{r}
+
+SchoolLeve_plot <- ggplot() +
+  geom_sf(data = schools_sf, aes(color = SchoolLeve)) + 
+  scale_color_manual(values = brewer.pal(8, "Dark2")) + #Qualitative  color pallette
+  theme_minimal() +
+  labs(title = "School Level")
+SchoolLeve_plot
+
+
+Charter_plot <- ggplot() +
+  geom_sf(data = schools_sf, aes(color = Charter)) + 
+  scale_color_manual(values = brewer.pal(8, "Paired")) + #Qualitative  color pallette
+  theme_minimal() +
+  labs(title = "Charter School? Y or N")
+Charter_plot
+
+
+SenateCA_plot <- ggplot() +
+  geom_sf(data = some_schools, aes(color = SenateCA)) + 
+  scale_color_manual(values = brewer.pal(8, "Set1")) + #Qualitative  color pallette
+  theme_minimal() +
+  labs(title = "California Senate District")
+SenateCA_plot
+
+
+MRpct_plot <- ggplot() + 
+  geom_sf(data=schools_sf, aes(color = MRpct)) +
+  scale_color_gradientn(colors = brewer.pal(9, "Greens")) + # Sequential greens color palette
+  theme_minimal() + 
+  labs(title = "Mixed Race Percent")
+MRpct_plot
+#or 
+MRpct_plot <- ggplot() + 
+  geom_sf(data=schools_sf, aes(color = MRpct)) +
+  scale_color_gradientn(colors = brewer.pal(9, "RdBu")) + # Diverging red-blue color palette
+  theme_minimal() + 
+  labs(title = "Mixed Race Percent")
+MRpct_plot
+```
+
+[Challenge 2]{.underline}
+
+```{r}
+
+counties$MULT_to_OTHER<-counties$MULT_RACE/counties$OTHER
+
+#plotting the distribution of people who identify with multiple races per county
+hist(counties$MULT_to_OTHER,
+     breaks = 40, # number of bins that the range of values is divided into
+     main = 'ratio of multi-race to other') #title 
+
+Ratio_plot <- tm_shape(counties) +
+  tm_polygons(col='MULT_to_OTHER', alpha=0.8,
+              palette="PiYG",
+              title = "... ")
+Ratio_plot 
+
+
+Tranform_plot_combined <- tmap_arrange(Count_plot, Density_plot, Percent_plot, Ratio_plot, ncol = 4)
+
+Tranform_plot_combined 
+```
+
+# 3. Mapping_Cont
+
+[Challenge 1]{.underline}
+
+```{r}
+
+library(tmaptools)
+
+HeadTails_clasi_plot <- tm_shape(counties) + 
+  tm_polygons(col = 'POP12_SQMI',
+              style = "headtails", #style of the break
+              alpha = 0.9,
+              title = "Population Density per mi^2 Headtails Scheme")
+HeadTails_clasi_plot
+
+# Assuming you have tmap plots named plot1, plot2, plot3, and plot4
+combined_clasi_plots <- tmap_arrange(quant_clasi_plot, nat_clasi_plot, man_clasi_plot, HeadTails_clasi_plot, ncol = 2)
+
+# View the combined plots
+combined_clasi_plots
+
+```
+
+# 4. Analyses
+
+[Challenge 1]{.underline}
+
+[Examine lengths using different units]{.underline}
+
+```{r}
+
+#use the 'Run current Chunk shortcut (play button on the right of the code chunk)
+
+#create a new column that contains the lengths in different units
+bart_lines$len_mi <- units::set_units(st_length(bart_lines), mi)
+bart_lines$len_km <- units::set_units(st_length(bart_lines), km)
+bart_lines$len_m <- units::set_units(st_length(bart_lines), m)
+```
+
+[Examine lengths using different CRS's]{.underline}
+
+```{r}
+
+#create a new column for each version of the length measurement for the different CRS'
+bart_lines$len_NAD83 <- units::set_units(st_length(st_transform(bart_lines,26910)), m)
+bart_lines$len_WebMarc <- units::set_units(st_length(st_transform(bart_lines,3857)), m)
+bart_lines$len_WGS84 <- units::set_units(st_length(st_transform(bart_lines,4326)), m)
+
+#view the modified dataframe
+head(bart_lines)
+```
+
+[Challenge 2]{.underline}
+
+```{r}
+
+LA_county_utm10 <- counties_utm10[counties_utm10$NAME == "Los Angeles" , ]
+
+K_12_schools_utm10 <- schools_utm10[schools_utm10$SchoolType == "K-12", ]
+
+# Select all Alameda County Schools NOT in Berkeley with the disjoint operator
+K_12_LA_utm10_disjoint <- K_12_schools_utm10[LA_county_utm10, ,op=st_disjoint]
+
+# Plot the result
+# fix : use tmap, add CA boundary 
+plot(K_12_LA_utm10_disjoint$geometry,
+     col = "blue")
+plot(LA_county_utm10, 
+     col = NA, 
+     border = "purple", 
+     add = T)
+plot(Alameda_county_utm10,
+     col = NA, 
+     border = "red", 
+     add = T)
+
+```
+
+------------------------------------------------------------------------
+
+# 5. Raster
+
+[Challenge 1]{.underline}
+
+```{r}
+
+schools_sf = vect(here("data",
+                               "California_Schools_2019-20",
+                               "SchoolSites1920.shp"))
+
+schools_sf_NAD83 = project(schools_sf, sf_tracts_NAD83)
+
+#subset only the schools in San Francisco county
+san_fran_schools_NAD83 <- schools_sf_NAD83[schools_sf_NAD83$CountyName == "San Francisco", ]
+
+map_2 <- ggplot() +
+  geom_spatraster(data = sf_DEM_NAD83_crop_masked) +  # Plot raster data
+  geom_spatvector(data = sf_tracts_NAD83, fill=NA, color="black")+
+  geom_spatvector(data = san_fran_schools_NAD83, fill=NA, color="black")+
+    theme_bw() +
+  scale_fill_gradientn(na.value = "transparent",colors = brewer.pal(n = 7, name = "YlGn")) #remove defualt grey fill for NA values and plot using yellow green color palette
+map_2
+
+san_fran_schools_NAD83_mask <- terra::mask(san_fran_schools_NAD83, sf_tracts_NAD83)
+
+map_3 <- ggplot() +
+  geom_spatraster(data = sf_DEM_NAD83_crop_masked) +  # Plot raster data
+  geom_spatvector(data = sf_tracts_NAD83, fill=NA, color="black")+
+  geom_spatvector(data = san_fran_schools_NAD83_mask, fill=NA, color="black")+
+    theme_bw() +
+  scale_fill_gradientn(na.value = "transparent",colors = brewer.pal(n = 7, name = "YlGn")) #remove defualt grey fill for NA values and plot using yellow green color palette
+map_3
+
+
+san_fran_schools_NAD83_intersect <- intersect(san_fran_schools_NAD83, sf_tracts_NAD83) 
+```
+
+[Challenge 2]{.underline}
+
+```{r}
+
+bart_lines <- vect(here('data', 'transportation', 'bart_lines_2019.geojson'))
+
+bart_lines_NAD83 = project(bart_lines , sf_tracts_NAD83)
+
+map_5 <- ggplot() +
+  geom_spatraster(data = sf_DEM_NAD83_crop_masked) +  # Plot raster data
+  geom_spatvector(data = sf_tracts_NAD83, fill=NA, color="black")+
+  geom_spatvector(data = bart_lines_NAD83, fill=NA, color="black")+
+    theme_bw() +
+  scale_fill_gradientn(na.value = "transparent",colors = brewer.pal(n = 7, name = "YlGn")) #remove defualt grey fill for NA values and plot using yellow green color palette
+map_5
+
+#mask the census tract to the BART coverage
+sf_tracts_NAD83_masked_bart = terra::mask(sf_tracts_NAD83, bart_lines_NAD83)
+
+# plot the census tracts that the BART lines go through 
+map_6 <- ggplot() +
+  geom_spatraster(data = sf_DEM_NAD83_crop_masked) +  # Plot raster data
+  geom_spatvector(data = sf_tracts_NAD83_masked_bart, fill=NA, color="black")+
+  geom_spatvector(data = bart_lines_NAD83, fill=NA, color="black")+
+    theme_bw() +
+  scale_fill_gradientn(na.value = "transparent",colors = brewer.pal(n = 7, name = "YlGn")) #remove defualt grey fill for NA values and plot using yellow green color palette
+map_6
+
+# compute the average elevations of the census tracts in San Francisco through which the BART lines go through
+bart_census_elev <- zonal(sf_DEM_NAD83, sf_tracts_NAD83_masked_bart, fun=max)
+# rename the columns to something easy to interpret
+colnames(bart_census_elev) <- "max_elev_bart"
+
+sf_tracts_NAD83_masked_bart_max<- cbind(sf_tracts_NAD83_masked_bart,bart_census_elev)
+
+head(sf_tracts_NAD83_masked_bart_max)
+
+```
+
+[Challenge 3]{.underline}
+
+```{r}
+
+map_7 <- ggplot() +
+  geom_spatraster(data = landcover_difference) +  # Plot raster data
+  geom_spatvector(data = sf_tracts_NAD83, fill=NA, color="black")+
+    theme_bw() +
+  scale_fill_gradientn(na.value = "transparent",colors = brewer.pal(n = 7, name = "YlGn")) #remove defualt grey fill for NA values and plot using yellow green color palette
+map_7
+
+land_use_chg <- zonal(landcover_difference, sf_tracts_NAD83, fun=sum)
+
+colnames(land_use_chg) <- "total_change"
+
+sf_tracts_NAD83_land_use <- cbind(sf_tracts_NAD83,land_use_chg)
+
+map_8 <- ggplot() +
+  geom_spatvector(data = sf_tracts_NAD83_land_use, aes(fill=total_change), color="black")+
+    theme_bw() +
+  scale_fill_gradientn(na.value = "transparent",colors = brewer.pal(n = 7, name = "Greens"))+ #remove defualt grey fill for NA values and plot using green color palette
+  labs(title = "Total # of Land Use Changes 2011-2021")  # Add a title 
+map_8
+
+```
