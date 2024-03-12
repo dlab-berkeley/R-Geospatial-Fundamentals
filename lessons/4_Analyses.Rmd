@@ -1,0 +1,786 @@
+---
+title: Geospatial Data Fundamentals in R
+output: html_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Learning Objectives
+
+Welcome to R Geospatial Fundamentals. Our goals for today's workshop
+are:
+
+1.  **Understand spatial queries** including measurement and
+    relationship queries
+2.  **Perform basic spatial analysis** such as calculating distances,
+    areas, and lengths within spatial datasets
+3.  **Apply proximity analysis techniques** such as creating buffers and
+    identifying nearby features
+
+------------------------------------------------------------------------
+
+Throughout this workshop series, we will use the following icons:
+
+🔔 **Question**: A quick question to help you understand what's going
+on.
+
+🥊 **Challenge**: Interactive exercise. We'll go through these in the
+workshop!
+
+⚠️ **Warning**: Heads-up about tricky stuff or common mistakes.
+
+💡 **Tip**: How to do something a bit more efficiently or effectively.
+
+📝 **Poll**: A zoom poll to help you learn.
+
+🎬 **Demo**: Showing off something more advanced so you know what you
+can use R for in the future
+
+------------------------------------------------------------------------
+
+## Spatial Queries
+
+-   Spatial queries enable users to explore and map datasets, leading to
+    intricate models and visualizations of real-world features and
+    phenomena not immediately evident in spatial datasets.
+
+-   Spatial queries are a fundamental aspect of spatial analysis that
+    allow for calculations and data subsetting based on spatial
+    relationships between different datasets and geometries, as long as
+    they share geographic space.
+
+-   These relationships operations, like proximity and intersection,
+    play a key role in the analytical process through creating and
+    extracting data metrics and insightful data subsets.
+
+In this lesson we will starting in by exploring the two basic types of
+spatial queries: measurement queries and relationship queries.
+
+------------------------------------------------------------------------
+
+### Spatial Measurement Queries
+
+Measurement queries involve calculations such as distances, areas, and
+other geometric properties to provide insights into the spatial
+relationships within a dataset(s).
+
+Ask question like
+
+-   What is feature A's **length**?
+    -   What is the length of the BART train line between Walnut Creek
+        and Rockridge?
+-   What is feature A's **distance** from feature B?
+    -   What is the distance between Berkeley High School and Berkeley
+        BART Station?
+-   What is feature A's **area**?
+    -   What is the area of Alameda County?
+
+[Load the libraries]{.underline}
+
+```{r, message=F}
+library(sf)
+library(tmap)
+library(here)
+
+```
+
+[Read in the CA Counties data]{.underline}
+
+```{r}
+
+# Read in the counties shapefile
+counties = st_read(dsn = here("data", 
+                              "california_counties", 
+                              "CaliforniaCounties.shp"))
+
+#fix any potential issues with the counties geometry
+counties <- st_make_valid(counties)
+
+#avisualize the geometry
+plot(counties$geometry)
+```
+
+```{r}
+
+#review the contents of the dataframe
+head(counties,2)
+```
+
+#### Measurement Queries: Units
+
+When conducting measurement queries, it's essential to have consistent
+units to ensure accurate and meaningful analyses.
+
+Let's start by looking at the different ways units can be expressed and
+different aspects of spatial data that influence units.
+
+Lets start by selecting data pertaining only to Alameda County and save
+it to a new spatial dataframe.
+
+\*\* Note that this is an **attribute query** which involves selecting
+or filtering data based on specific attributes or properties within a
+dataset
+
+[select only data pertaining to Alameda county]{.underline}
+
+```{r}
+
+#using $ to select for when the NAME column has 'Alameda' as an entry
+alameda = counties[counties$NAME=='Alameda',]
+
+#plot the Alameda county geometry
+plot(alameda$geometry)
+```
+
+A measurement query is similar, but more expansive in that it allow
+users to subset data and create new relationships based on spatial
+metrics and calculations (e.g. distances, areas)
+
+We'll start off with some simple measurement queries. Let's first
+calculate the area of Alameda county using the `st_area` function.
+
+[Get the area of Alameda County with the`sf` function
+`st_area`]{.underline}
+
+```{r}
+
+#use the st_area function to get the area of Alameda county
+st_area(alameda)
+```
+
+This gives the area of the county in square meters. CRS' generally have
+specific units associated with them.
+
+`sf` uses the `units` package to manage (get and set) units.
+
+It's more useful to return the area of large regions in square KM (or sq
+miles) and we can do that with the `set_units` function.
+
+[convert the default units]{.underline}
+
+```{r}
+
+#use the set_units and st_area functions to calculate are and convert the are to km^2 units
+units::set_units(st_area(alameda), km^2)
+```
+
+⚠️ **Warning**: manual unit conversions (e.g. dividing m^2^ by 10^6^ to
+get km^2^) using the `sf` package don't translate well - converted
+values may still be reported as m2.
+
+Now you try it!
+
+Calculate the area of Alameda County in sq miles.
+
+-   What should you change `km^2` to?
+-   Hint: you can take a look at [Measurement units in
+    R](https://cran.r-project.org/web/packages/units/vignettes/measurement_units_in_R.html)
+    to get a sense of more units
+
+```{r}
+
+#set the area units to square miles
+units::set_units(st_area(alameda), mi^2)  ## WHAT SHOULD YOU CHANGE IT TO?
+```
+
+Always check your measurements.
+
+It's a good idea to check one or two measurements before you automate
+your workflow to make sure you are getting valid values. If we look up
+the area of Alameda county on
+[wikipedia](https://en.wikipedia.org/wiki/Alameda_County,_California)
+(last edited on 7 December 2023) we get 821 sq mi (2130 km2).
+
+🔔 **Question**: Are the values returned by `st_area` valid? Why might
+they differ?
+
+We can also use `st_area` to add the area of all counties to the spatial
+dataframe.
+
+[Create a new column in the existing dataframe containing the area of
+the counties]{.underline}
+
+```{r}
+
+#create a new column that contains the area in Km^2 for the NAD83 CRS
+counties$areakm2_NAD83 <- units::set_units(st_area(counties), km^2)
+
+# take a look at the added column
+head(counties)
+```
+
+Spatial measurements are greatly dependent on the coordinate reference
+system (CRS). They can differ greatly depending on the CRS. Let's take a
+look at the areas in different CRS's using a script with multiple
+functions.
+
+[Examine the areas using different CRS's]{.underline}
+
+```{r}
+
+#create a new column for each version of the area: 
+
+# Calculate area using data in WGS84 CRS (4326)
+counties$areakm2_wgs84 <- units::set_units(st_area(st_transform(counties,4326)), km^2)
+
+# Calculate area using data in UTM NAD83 zone 10 CRS (26910)
+counties$areakm2_utm <- units::set_units(st_area(st_transform(counties,26910)), km^2)
+
+# Calculate area using data in Web Mercator CRS (3857)
+counties$areakm2_web <- units::set_units(st_area(st_transform(counties, 3857)), km^2)
+
+# Take a look at a subset of the Name and area columns only
+head(counties[,c('NAME','areakm2_NAD83','areakm2_wgs84','areakm2_utm','areakm2_web')])
+
+```
+
+Output Interpretation:
+
+-   **NAD83 / CA Albers:** The source data's CRS, CA Albers, is
+    optimized for accurate area measurements within California. Values
+    in the **`area_km2`** column are highly precise, assuming accurate
+    underlying geometry.
+
+-   **WGS84:** Computing areas in WGS84 (a geographic CRS with decimal
+    degrees) yields almost identical values. Modern versions of the
+    **`sf`** package use spherical geometry for precise area
+    computations, even in geographic data.
+
+-   **UTM10:** This CRS is optimized for Northern California, making it
+    less accurate as you move away from the zone's center (e.g.,
+    Southern California).
+
+-   **Web Mercator:** While preserving shape, Web Mercator significantly
+    distorts area. It's unsuitable for precise area calculations.
+
+The important takeaway is that you need to use a CRS that is appropriate
+for your analysis/mapping needs!
+
+When creating a spatial analysis work flow it is common to start by
+transforming all of your data to the same, appropriate CRS.
+
+------------------------------------------------------------------------
+
+We can use the `st_length` operator in the same way as `st_area` to
+calculate the length of features in a spatial dataframe. Always take
+note of the output units!
+
+Let's determine how many miles of metro lines there are using Bay Area
+Rapid Transit (BART) data
+
+[Read in the BART lines data]{.underline}
+
+```{r}
+
+#read in the BART lines data into a new variable
+bart_lines <- st_read(here('data', 'transportation', 'bart_lines_2019.geojson'))  #note the different file type
+
+#data source: https://geodata.lib.berkeley.edu/catalog/stanford-mh686mh0418
+```
+
+🔔 **Question**: what is a quick way to visualize the geospatial data we
+just read in?
+
+```{r}
+
+#create a quick plot of the bart_lines geometry
+plot(bart_lines$geometry)
+```
+
+🔔 **Question**: what type of geometry do you think the bart_lines data
+is?
+
+------------------------------------------------------------------------
+
+## 🥊 Challenge 1: Examine and modify length measurements
+
+Similar to the `st_area` function, the `st_length` allows you to
+determine the length of a line geometry.
+
+-   Create new columns called `len_mi`, `len_km`, and `len_m` that
+    contain the length of the bartlines geometry in miles, kilometers,
+    and meters respectfully.
+
+-   Create new columns called len_NAD83, len_WebMarc, and len_WGS84 that
+    contain the length of the bartlines geometry in the NAD83, Web
+    Mercator, and WGS84 CRS's. (search previous text for the respective
+    EPSG codes if needed).
+
+[Examine lengths using different units]{.underline}
+
+```{r}
+
+# YOUR CODE HERE
+```
+
+[Examine lengths using different CRS's]{.underline}
+
+```{r}
+
+# YOUR CODE HERE
+```
+
+------------------------------------------------------------------------
+
+#### Measurement Queries: Distance
+
+The `st_distance` function can be used to find the distance between two
+geometries or two sets of geometries. Let's compute the distance between
+two schools.
+
+[load in the data]{.underline}
+
+```{r}
+
+# Read in the school_sf shapefile
+schools_sf = st_read(dsn =here("data",
+                               "California_Schools_2019-20",
+                               "SchoolSites1920.shp"))
+```
+
+```{r}
+
+#read more about the distance function
+?st_distance
+
+colnames(schools_sf) #identify the column name containg the name of the schools
+```
+
+[compute the distance between two points]{.underline}
+
+```{r}
+
+#determine the distance between Alameda and Berkeley high
+st_distance(schools_sf[schools_sf$SchoolName=='Alameda High',], 
+                          schools_sf[schools_sf$SchoolName=='Berkeley High',])
+```
+
+You can also use `st_distance()` to find the distance between multiple
+features
+
+[compute the distance between features in different
+datasets]{.underline}
+
+```{r}
+
+# tranform the CRS' to match using 2 methods
+schools_utm10 <- st_transform(schools_sf, 26910) #assign the CRS based on the EPSG code
+bart_lines_utm10 = st_transform(bart_lines, st_crs(schools_utm10 )) #assign the CRS based on the first dataset
+
+View(bart_lines_utm10) #note that there are 6 bart line segments
+```
+
+```{r}
+
+#calculate the distance between Berkeley High and each portion of the BART line
+st_distance(schools_utm10[schools_utm10$SchoolName=='Berkeley High',], bart_lines_utm10)
+
+```
+
+Note the format of the output. The `st_distance()` calculates the
+distance from the point location of the school and each segment of the
+BART lines
+
+🔔 **Question**: since the dataframe itself does not contain explicit
+information about the 6 BART lines, how can one better understand the
+data?
+
+-   Metadata, including those sometimes contained with the shapefiles
+    may provide additional information.
+
+There are different ways to determine which section of the BART lines to
+calculate the distance to, for instance, to the nearest point of the
+line geometry, which depend on the goal of the analysis. See the
+`?st_distance()` documentation for more details.
+
+Measurement queries focus more on distance, area, etc. relationships
+between geometrys. Relationship queries relate elements of two
+geometries.
+
+------------------------------------------------------------------------
+
+### Spatial Relationship Queries
+
+[Spatial relationship
+queries](https://en.wikipedia.org/wiki/Spatial_relation) consider how
+two geometries or sets of geometries relate to one another in space.
+
+relationship queries ask questions like:
+
+-   Is feature A **within** feature B?
+    -   *What schools are in the city of Berkeley?*
+-   Does feature A **intersect** with feature B?
+    -   In which cities are Tilden Regional Park located?
+-   Does feature A **cross** feature B?
+    -   *Does the BART train line cross into Albany?*
+
+![](https://upload.wikimedia.org/wikipedia/commons/5/55/TopologicSpatialRelarions2.png){height="300px"}
+
+These can be used to select features in one dataset based on their
+spatial relationship to another.
+
+Let's take a look at a few relationship queries.
+
+------------------------------------------------------------------------
+
+1.  Spatial Intersections
+
+Geometry A spatially intersects Geometry B if any of its parts (e.g., a
+point, line segment, or polygon) is equivalent to, touches, crosses, is
+contained by, contains, or overlaps any part of Geometry B.
+
+This is the most general of all spatial relationships!
+
+The `st_intersects()` function is used to determine intersections, and
+can be used to specify explicit relationships (e.g. touches) by setting
+the operation or `op=()` argument to any of the options listed in the
+`?st_intersects` help documentation (e.g. `st_touches`, `st_crosses`).
+
+[view help documentation]{.underline}
+
+```{r}
+
+#see the various options similar to intersects. See the Usage section
+?st_intersects
+```
+
+Let's examine a spatial intersection by determining how continuation
+schools intersect Alameda county
+
+[determine specific school that intersect one county]{.underline}
+
+```{r}
+
+#convert the counties dataframe into the utm10 CRS
+counties_utm10 = st_transform(counties, st_crs(schools_utm10 ))
+```
+
+```{r}
+
+#subset only the schools in Alameda county
+Alameda_county_utm10 <- counties_utm10[counties_utm10$NAME =="Alameda", ]
+```
+
+```{r}
+
+#subset only the Continuing education schools
+Continuation_schools_utm10 <- schools_utm10[schools_utm10$SchoolType == "Continuation", ]
+
+#determine the number of continuing education schools there are
+nrow(Continuation_schools_utm10)
+
+
+#more info on Continuation schools: https://www.cde.ca.gov/sp/eo/ce/
+```
+
+[use `st_intersects` to determine the intersection]{.underline}
+
+```{r}
+
+
+# select only the continuing education schools that intersect Alameda county
+Continuation_Alameda_utm10 <- Continuation_schools_utm10[Alameda_county_utm10, ,op=st_intersects]
+
+#determine how many schools there are that meet the criteria and view the data on these schools
+nrow(Continuation_Alameda_utm10)
+head(Continuation_Alameda_utm10)
+```
+
+The syntax we used was to
+
+-   Select the features (i.e. rows) in the `Continuation_schools_utm10`
+    dataframe
+
+-   whose geometry **spatially intersects** the `Alameda_county_utm10`
+    geometry
+
+-   and keep all of the other `Continuation_schools_utm10` columns (all-
+    because the extraction brackets have no second argument)
+
+Let's create a quick plot to visualize what our selection returned
+
+[visualize the intersecting schools]{.underline}
+
+```{r}
+
+# create a quick plot of the results the results
+
+plot(Alameda_county_utm10$geometry, border="brown")
+plot(Continuation_Alameda_utm10$geometry, col="red", add = T)
+```
+
+------------------------------------------------------------------------
+
+## 🥊 Challenge 2: Schools distance
+
+Unlike the `st_intersects()` function, `st_disjoint()` subsets the
+features in A that do not share space with B. It selects the features
+that have no spatial intersection.
+
+1.  Subset the counties data by selecting only `"Los Angeles"` in the
+    `counties_utm10` county dataframe. Save this dataframe as
+    `LA_county_utm10`
+
+2.  Subset all the `"K-12"` schools in the `schools_utm10` dataframe.
+    Save this dataframe as `"K_12_schools_utm10"`
+
+3.  Select all K-12 Schools that do not share space with (e.g. NOT in)
+    Los Angeles County
+
+4.  On the same map, plot these schools in `"blue"`, the Los Angeles
+    county boundary in `"purple"`, and add the Alameda county boundary
+    in `"red"`. Using the `plot` function may be helpful.
+
+```{r}
+
+# YOUR CODE HERE
+```
+
+------------------------------------------------------------------------
+
+[Here](https://github.com/rstudio/cheatsheets/blob/master/sf.pdf) is an
+`sf` cheatsheet that lists and briefly explains common relationship
+functions
+
+![](images/sf_Cheatsheet.png)
+
+Let's expand on our analyses by combining measurement and relationship
+queries.
+
+------------------------------------------------------------------------
+
+### Measurement and Relationship Queries Combined - Proximity Analyses
+
+Measurement queries return a continuous value (e.g. area) while
+relationship queries evaluate to true or false, and then return the
+features for which the relationship is true. Let's take a look at a
+common analysis that combines those concepts: promiximity analysis.
+
+Proximity analyses ask questions like
+
+-   What schools in Berkeley are within 1/4 mile of a BART station?
+
+Proximity analysis helps identify nearby features---to find all features
+within a certain maximum distance of features in another dataset
+
+A common workflow for this type of analysis is:
+
+1.  Buffer around the features in the reference dataset to create buffer
+    polygons. (`st_buffer()`)
+
+2.  Run a spatial relationship query to find all features that intersect
+    (or are within) the buffer polygons.
+
+------------------------------------------------------------------------
+
+Let's conduct a proximity analysis to think through the concept of a
+walkable city. One aspect of a walkable city is that services (d.e
+public transportation) are accessible within a certain walk time.
+
+Let's consider how 'walkable' Alameda county is by looking at the
+proximity of BART lines to continuing education schools.
+
+[Plot the geometry]{.underline}
+
+```{r}
+
+#plot the bart_lines geometry using tmap
+tm_shape(bart_lines_utm10) + 
+  tm_lines(col = 'orange')
+```
+
+[Create a buffer]{.underline}
+
+```{r}
+
+#Create a buffer around the bart lines of 800 meters.
+bart_lines_buf_utm10 = st_buffer(bart_lines_utm10, dist = 800)
+
+#Note: the value is based on 5-10 minute walk = ~ 4-800 m
+
+#one, somewhat arbitrary, publication on walkable cities: https://www.sciencedirect.com/science/article/pii/S2667091722000188
+```
+
+[Visualize schools proximity to BART lines within Alameda county
+borders]{.underline}
+
+```{r}
+
+#plotting the BART lines 800m buffer and all schools within Alameda
+bart_Alameda_plot <- tm_shape(Alameda_county_utm10) + 
+  tm_polygons(col = 'lightgrey') + 
+tm_shape(bart_lines_utm10) + 
+  tm_lines() 
+
+bart_Alameda_plot #creating a plot as a separate variable could make it easier to add to the plot
+```
+
+```{r}
+
+#add the 800m bart lines buffer
+bart_Alameda_buffer_plot <- bart_Alameda_plot + 
+tm_shape(bart_lines_buf_utm10) + 
+  tm_polygons(col = 'pink', alpha = 0.5)
+
+bart_Alameda_buffer_plot
+```
+
+```{r}
+
+#add the continuing education schools 
+bart_Alameda_buffer_continuation_plot <- bart_Alameda_buffer_plot+
+tm_shape(Continuation_Alameda_utm10) + 
+  tm_dots(col = 'purple', size = 0.2)
+
+bart_Alameda_buffer_continuation_plot
+```
+
+Great! Looks like we're all ready to run our spatial relationship query
+to complete the proximity analysis. At this point (pun intended) we'll
+select the schools that are in within the BART line buffer polygons.
+
+```{r}
+
+#select the Continuation schools that intersect with the bart lines buffer
+Continuation_Alameda_utm10_bart_buf <- Continuation_schools_utm10[bart_lines_buf_utm10, ,op=st_intersects]
+```
+
+Now let's overlay again, to see if the schools we selected make sense.
+
+```{r}
+
+# highlight the schools interrsect the BART line buffer in yellow
+bart_Alameda_buffer_continuation_intersect_plot <- bart_Alameda_buffer_continuation_plot +  
+tm_shape(Continuation_Alameda_utm10_bart_buf) + 
+  tm_dots(col = 'yellow', size = 0.2) 
+bart_Alameda_buffer_continuation_intersect_plot
+```
+
+The schools in yellow would be considered in a 'Walkable City'
+framework.
+
+🔔 **Question**: Take a break and think of other, similar analyses you
+could perform.
+
+------------------------------------------------------------------------
+
+### Proximity Analysis: Nearest Feature
+
+We can can use `st_distance()` and its companion function
+`st_nearest_feature()` to compute the distance between each feature of A
+and the nearest feature in B (e.g. a middle school and the nearest high
+school).
+
+[subset the schools dataframe]{.underline}
+
+```{r}
+
+#create a new dataframe that only contains schools in the Berkeley Unified school district, 
+Berkeley_schools_utm10 <- schools_utm10[schools_utm10$DistrictNa == "Berkeley Unified", ]
+
+#create a new dataframe that contains only the elementary schools in the district
+Berkeley_Elementary_schools_utm10 <- Berkeley_schools_utm10[Berkeley_schools_utm10$SchoolType  == "Elementary", ]
+
+#create a new dataframe that contains only the middle schools in the district
+Berkeley_Middle_schools_utm10 <- Berkeley_schools_utm10[Berkeley_schools_utm10$SchoolType == "Middle", ]
+```
+
+[identify the nearest feature]{.underline}
+
+```{r}
+
+# for each elementary school, extract the ID of the nearest middle school
+nearest_elementary_middle_school = st_nearest_feature(Berkeley_Elementary_schools_utm10 , Berkeley_Middle_schools_utm10)
+
+# take a look!
+nearest_elementary_middle_school
+```
+
+The output: the `st_nearest_feature` function returns the index or ID of
+the closest feature. These are stored in
+`nearest_elementary_middle_school`. We can use this index output to see
+the specific school
+
+[View middle schools using index notation]{.underline}
+
+```{r}
+
+#View what the index output of the st_nearest_features refers to
+Berkeley_Middle_schools_utm10[1,]
+```
+
+[view syntax of st_nearest_feature function]{.underline}
+
+```{r}
+
+#see help info
+?st_nearest_feature
+```
+
+We can view the full information of the nearest middle school using the
+fact that the output is an index.
+
+```{r}
+
+#extract the nearest middle school using indices 
+View(Berkeley_Middle_schools_utm10[nearest_elementary_middle_school,])
+```
+
+Then we can use `st_distance()` to calculate the distance between each
+elementary school, and the nearest middle school. To do this, we will
+create a new column that stores the distance calculation:
+
+[Determine the distance between the elementary school and the nearest
+middle school]{.underline}
+
+```{r}
+
+#create a new column in the Berkeley_Elementary_schools_utm10 dataframe called elementary_middle_school_dist 
+
+#use st_distance between each elementary school (Berkeley_Elementary_schools_utm10) and the closest middle school (Berkeley_Middle_schools_utm10[nearest_elementary_middle_school,])
+
+Berkeley_Elementary_schools_utm10$elementary_middle_school_dist <- st_distance(
+  Berkeley_Elementary_schools_utm10,
+  Berkeley_Middle_schools_utm10[nearest_elementary_middle_school,], 
+                                              by_element = TRUE)
+#remember that nearest_elementary_middle_school is an index that specifies the nearest middle school, which is why we can use it in bracket notation. 
+
+#extract just the school name and the distance
+Berkeley_Elementary_schools_utm10[, c("SchoolName","elementary_middle_school_dist")]
+                                  
+# can order the data
+#Berkeley_Elementary_schools_utm10[order(Berkeley_Elementary_schools_utm10$elementary_middle_school_dist),]
+
+```
+
+Note that although we only selected the two columns, the geometry
+columns came along.
+
+This is one nuanced example of the many of the ways we can work with
+spatial queries. Use this as an example of what is possible.
+
+------------------------------------------------------------------------
+
+## Key Points
+
+In today's workshop, we focused on how
+
+-   Measurement queries involve calculating areas (`st_area() )`,and
+    other geometric properties (`st_length() )` within spatial datasets.
+    We looked at this, for instance, through using **`st_distance()`**
+    to find distances between schools and transportation lines.
+-   Relationship queries allow you to analyze how sets of geometries
+    relate to each other in space. We used `st_intersect()` and
+    `st_disjoint()` to look at schools within or outside a county.
+-   Proximity analysis allows us to find nearby features
+    (`st_nearest_feature() )` within a certain distance, like
+    identifying schools within a certain distance of transportation
+    lines using buffers (`st_buffer()`)
+
+Next time, we will introduce ourselves to another type of geospatial
+datatype - Raster data.
