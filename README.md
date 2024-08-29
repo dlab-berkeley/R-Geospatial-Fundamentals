@@ -13,7 +13,7 @@ Check D-Lab's [Learning Pathways](https://dlab-berkeley.github.io/dlab-workshops
 
 ## Workshop Goals
 
-In this 3-part workshop series, we will provide an introduction to spatial analyses in R. We discuss the benefits of the additional ‘location’ component that defines spatial data and how spatial dataframes organize this information. Using the sf (simple features) and terra packagesin R, we will navigate fundamental operations for reading, writing, manipulating, and visualizing spatial data.
+In this 3-part workshop series, we will provide an introduction to spatial analyses in R. We discuss the benefits of the additional ‘location’ component that defines spatial data and how spatial dataframes organize this information. Using the `sf` (simple features) and `terra` packages in R, we will navigate fundamental operations for reading, writing, manipulating, and visualizing spatial data.
 
 This workshop aims to equip participants with the fundamentals needed to conduct spatial analyses for their various endeavors.
 
