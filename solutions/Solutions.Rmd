@@ -14,10 +14,6 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 
-#read in the counties shapefile
-counties = st_read(here("data",
-                              "california_counties", 
-                              "CaliforniaCounties.shp"))
 
 #look at the first few rows of the data
 head(counties)
@@ -177,109 +173,5 @@ plot(Alameda_county_utm10,
      col = NA, 
      border = "red", 
      add = T)
-
-```
-
-------------------------------------------------------------------------
-
-# 5. Raster
-
-[Challenge 1]{.underline}
-
-```{r}
-
-schools_sf = vect(here("data",
-                               "California_Schools_2019-20",
-                               "SchoolSites1920.shp"))
-
-schools_sf_NAD83 = project(schools_sf, sf_tracts_NAD83)
-
-#subset only the schools in San Francisco county
-san_fran_schools_NAD83 <- schools_sf_NAD83[schools_sf_NAD83$CountyName == "San Francisco", ]
-
-map_2_DEM_Cen_Sch <- ggplot() +
-  geom_spatraster(data = sf_DEM_NAD83_crop_masked) +  # Plot raster data
-  geom_spatvector(data = sf_tracts_NAD83, fill=NA, color="black")+
-  geom_spatvector(data = san_fran_schools_NAD83, fill=NA, color="black")+
-    theme_bw() +
-  scale_fill_gradientn(na.value = "transparent",colors = brewer.pal(n = 7, name = "YlGn")) #remove defualt grey fill for NA values and plot using yellow green color palette
-map_2_DEM_Cen_Sch
-
-san_fran_schools_NAD83_mask <- terra::mask(san_fran_schools_NAD83, sf_tracts_NAD83)
-
-map_3_DEM_Cen_SchMask <- ggplot() +
-  geom_spatraster(data = sf_DEM_NAD83_crop_masked) +  # Plot raster data
-  geom_spatvector(data = sf_tracts_NAD83, fill=NA, color="black")+
-  geom_spatvector(data = san_fran_schools_NAD83_mask, fill=NA, color="black")+
-    theme_bw() +
-  scale_fill_gradientn(na.value = "transparent",colors = brewer.pal(n = 7, name = "YlGn")) #remove defualt grey fill for NA values and plot using yellow green color palette
-map_3_DEM_Cen_SchMask
-
-
-san_fran_schools_NAD83_intersect <- intersect(san_fran_schools_NAD83, sf_tracts_NAD83) 
-```
-
-[Challenge 2]{.underline}
-
-```{r}
-
-bart_lines <- vect(here('data', 'transportation', 'bart_lines_2019.geojson'))
-
-bart_lines_NAD83 = project(bart_lines , sf_tracts_NAD83)
-
-map_5_DEM_Cen_BART <- ggplot() +
-  geom_spatraster(data = sf_DEM_NAD83_crop_masked) +  # Plot raster data
-  geom_spatvector(data = sf_tracts_NAD83, fill=NA, color="black")+
-  geom_spatvector(data = bart_lines_NAD83, fill=NA, color="black")+
-    theme_bw() +
-  scale_fill_gradientn(na.value = "transparent",colors = brewer.pal(n = 7, name = "YlGn")) #remove defualt grey fill for NA values and plot using yellow green color palette
-map_5_DEM_Cen_BART
-
-#mask the census tract to the BART coverage
-sf_tracts_NAD83_masked_bart = terra::mask(sf_tracts_NAD83, bart_lines_NAD83)
-
-# plot the census tracts that the BART lines go through 
-map_6_DEM_CenMask_BART <- ggplot() +
-  geom_spatraster(data = sf_DEM_NAD83_crop_masked) +  # Plot raster data
-  geom_spatvector(data = sf_tracts_NAD83_masked_bart, fill=NA, color="black")+
-  geom_spatvector(data = bart_lines_NAD83, fill=NA, color="black")+
-    theme_bw() +
-  scale_fill_gradientn(na.value = "transparent",colors = brewer.pal(n = 7, name = "YlGn")) #remove defualt grey fill for NA values and plot using yellow green color palette
-map_6_DEM_CenMask_BART
-
-# compute the average elevations of the census tracts in San Francisco through which the BART lines go through
-bart_census_elev <- zonal(sf_DEM_NAD83, sf_tracts_NAD83_masked_bart, fun=max)
-# rename the columns to something easy to interpret
-colnames(bart_census_elev) <- "max_elev_bart"
-
-sf_tracts_NAD83_masked_bart_max<- cbind(sf_tracts_NAD83_masked_bart,bart_census_elev)
-
-head(sf_tracts_NAD83_masked_bart_max)
-
-```
-
-[Challenge 3]{.underline}
-
-```{r}
-
-map_7_landchg_Cen <- ggplot() +
-  geom_spatraster(data = landcover_difference) +  # Plot raster data
-  geom_spatvector(data = sf_tracts_NAD83, fill=NA, color="black")+
-    theme_bw() +
-  scale_fill_gradientn(na.value = "transparent",colors = brewer.pal(n = 7, name = "YlGn")) #remove defualt grey fill for NA values and plot using yellow green color palette
-map_7_landchg_Cen
-
-land_use_chg <- zonal(landcover_difference, sf_tracts_NAD83, fun=sum)
-
-colnames(land_use_chg) <- "total_change"
-
-sf_tracts_NAD83_land_use <- cbind(sf_tracts_NAD83,land_use_chg)
-
-map_8_landchg_sum <- ggplot() +
-  geom_spatvector(data = sf_tracts_NAD83_land_use, aes(fill=total_change), color="black")+
-    theme_bw() +
-  scale_fill_gradientn(na.value = "transparent",colors = brewer.pal(n = 7, name = "Greens"))+ #remove defualt grey fill for NA values and plot using green color palette
-  labs(title = "Total # of Land Use Changes 2011-2021")  # Add a title 
-map_8_landchg_sum
 
 ```
