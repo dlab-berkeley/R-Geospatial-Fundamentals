@@ -488,7 +488,5 @@ tm_shape(counties) +
 # Key Points
 
 -   What defines a spatial dataframe is that each feature (row) in the dataset, and has an associated `geometry`column that encodes the location (a point, line or polygon) over which the data stored in the columns (attributes) is applicable.
-
 -   There are various ways to project the complex surface of the earth results in different coordinate reference systems (CRS's). Knowing the CRS of your data and which CRS's are most applicable in your given context enables accurate data manipulation and integration.
-
 -   Visualizing spatial dataframes can reveal spatial patterns such as clusters, and spatial relationships such as proximity.
