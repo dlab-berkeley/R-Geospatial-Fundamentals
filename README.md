@@ -13,7 +13,7 @@ Check D-Lab's [Learning Pathways](https://dlab-berkeley.github.io/dlab-workshops
 
 ## Workshop Goals
 
-In this 2-part workshop series, we will provide an introduction to spatial analyses in R. We discuss the benefits of the additional ‘location’ component that defines spatial data and how spatial dataframes organize this information. Using the `sf` (simple features) and `terra` packages in R, we will navigate fundamental operations for reading, writing, manipulating, and visualizing spatial data.
+In this 2-part workshop series, we will provide an introduction to spatial analyses in R. We discuss the benefits of the additional ‘location’ component that defines spatial data and how spatial dataframes organize this information. Using the `sf` (simple features) package in R, we will navigate fundamental operations for reading, writing, manipulating, and visualizing spatial data.
 
 This workshop aims to equip participants with the fundamentals needed to conduct spatial analyses for their various endeavors.
 
@@ -22,13 +22,15 @@ This workshop aims to equip participants with the fundamentals needed to conduct
 After this workshop, you will be able to:
 
 Part 1
-- Understand different types of spatial data (points, lines, polygons).
-- Use appropriate coordinate reference systems.
-- Employ visualization techniques (overlay plotting, interactive maps).
+- Understand different types of spatial data (points, lines, polygons)
+- Use appropriate coordinate reference systems
+- Employ visualization techniques (overlay plotting, interactive maps)
+- Implement classification schemes (equal intervals, quantiles and natural breaks) for improved data visualization.
 
 Part 2
-- Implement classification schemes (equal intervals, quantiles and natural breaks) for improved data visualization.
-- Conduct spatial measurement queries (distance from, intersections, buffers, and finding nearest features).
+- Conduct spatial measurement queries (distance, length, area, nearest features)
+- Conduct spatial relationship queries (intersections, proximity analyses)
+- Conduct spatial joins and aggregations
 
 This workshop does not cover the following:
 
@@ -38,7 +40,7 @@ This workshop does not cover the following:
 
 ## Installation Instructions
 
-We will use [RStudio/Python] to go through the workshop materials, which requires installation of [Software]. Complete the following steps:
+We will use RStudio to go through the workshop materials, which requires installation of R. Complete the following steps:
 
 1. This step(s) details software to download, with a link.
 2. Download these workshop materials:
@@ -97,3 +99,4 @@ D-Lab offers a variety of R workshops, catered toward different levels of expert
 # Contributors
 
 Soliver Fusi
+Alex Ramiller
