@@ -70,7 +70,7 @@ library(sf)
 Let's read in our first spatial file, which is contained in the "data" folder under `california_schools/california_schools.shp`. For this, we will use the `st_read()` function from the `sf` package:
 
 ```{r}
-schools_sf <- st_read("../data/california_schools/california_schools.shp")
+schools_sf <- st_read("../data/california_schools.shp")
 #data source: https://gis.data.ca.gov/datasets/f7f818b0aa7a415192eaf66f192bc9cc
 ```
 
@@ -138,7 +138,7 @@ This summary includes:
 
 For this challenge, let's read in a new shapefile and store it as the object `counties`.
 
-1.  Read in the file `california_counties/california_counties.shp` (hint: follow the same filepath format as for the schools_sf object)
+1.  Read in the file `../data/california_counties.shp` (hint: follow the same filepath format as for the schools_sf object)
 2.  Look at the data: what information does this dataframe contain?
 3.  Identify the geometry type.
 
@@ -258,7 +258,7 @@ So far, we've dealt with 'preformatted' data, that comes as a spatial dataframe 
 
 ```{r}
 # Read in a CSV file containing information on schools in Alameda county
-alameda_schools_df <- read.csv("../data/alameda_schools/alameda_schools.csv")
+alameda_schools_df <- read.csv("../data/alameda_schools.csv")
 
 # Examine the contents of the dataframe
 head(alameda_schools_df)
@@ -305,7 +305,7 @@ The `st_write()` function is used to save spatial dataframes in the available fi
 
 # Save to shapefile
 st_write(alameda_schools_sf,                            # Object
-         "../data/alameda_schools/alameda_schools.shp", # Filepath
+         "../data/alameda_schools.shp", # Filepath
          #delete_dsn = TRUE                             # Replace existing version of this file (if applicable)
          )                             
 ```
@@ -318,7 +318,7 @@ Other geospatial file types include [.geojson](https://geojson.org/) or .[gpkg](
 
 # Save to geopackage
 st_write(alameda_schools_sf,                             # Object
-         "../data/alameda_schools/alameda_schools.gpkg", # Filepath
+         "../data/alameda_schools.gpkg", # Filepath
          #delete_dsn = TRUE                              # Replace existing version of this file (if applicable)
          )                             
 ```
