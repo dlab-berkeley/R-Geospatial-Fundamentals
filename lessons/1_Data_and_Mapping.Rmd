@@ -1,7 +1,7 @@
 ---
-title: "2_Vector_Data_Structures"
+title: "Spatial Data and Mapping"
 output: html_document
-date: "2023-10-16"
+date: "2025-02-18"
 editor_options: 
   chunk_output_type: inline
 ---
@@ -14,17 +14,14 @@ knitr::opts_chunk$set(echo = TRUE)
 
 Welcome to R Geospatial Fundamentals. Our goals for today's workshop are:
 
-1.  **Defining Geospatial data.**
-2.  **Understand the structure and components of spatial dataframes and the different geometry types.**
-3.  **Navigate different coordinate reference systems (CRS).**
-4.  **Effectively represent data using color, symbols, and other visual elements to highlight patterns in categorical data**
-5.  **Effectively represent data** using color, symbols, and other visual elements to highlight patterns in categorical data.
-6.  Understand how **transforming data improves data visualizations.**
-7.  Understand how **different classification schemes can be used to emphasize key aspects of geospatial data.**
+1.  Define **geospatial data** and understand the structure of **spatial dataframes**
+2.  Understand **Coordinate Reference Systems (CRS)**
+3.  Effectively represent data using **color, symbols, and other visual elements** to highlight patterns in spatial data
+4.  Understand how **data transformation** and **classification schemes** can be used to emphasize key aspects of geospatial data
 
 ------------------------------------------------------------------------
 
-#### Throughout this workshop series, we will use the following icons:
+Throughout this workshop series, we will use the following icons:
 
 🔔 **Question**: A quick question to help you understand what's going on.
 
@@ -40,93 +37,84 @@ Welcome to R Geospatial Fundamentals. Our goals for today's workshop are:
 
 ------------------------------------------------------------------------
 
-# **Defining Geospatial Data**
+# Part 1: Introducing Geospatial Data
 
-Why: Defining geospatial data establishes the basis of the type of data we are working with.
+## 1.1 Defining Geospatial Data
 
 Geospatial data is information encoded with a specific location using coordinates. It is made of attributes (what), representing the data associated a particular location (where). These attributes could range from environmental factors to demographic details.
 
-Example: Alameda High School
+**Example:** Alameda High School
 
-Attributes (what): number of students, year founded, school district etc.
+**Attributes (what):** number of students, year founded, school district etc.
 
-Location (where): 37°45'49"N 122°14'49"W
+**Location (where):** 37°45'49"N 122°14'49"W
 
 ![](../images/Alameda_High_School_Google_Earth.png)
 
-🔔 **Question**: Is the elevation shown in the image part of the attributes or the location?
+🔔 **Question**: Is the elevation shown in this image part of the attributes (what) or the location (where)?
 
 Geospatial data also often comes with additional data, metadata, that provides context. This could include information about where the geospatial data was obtained (the data source) or the date of last update of the data.
 
 ------------------------------------------------------------------------
 
-# Examining Spatial Dataframes
+## 1.2 Spatial Dataframes
 
-Let's visualize the information contained within a spatial dataframe. We'll be using R's Simple Features package `sf`, a package designed to simplify analysis of spatial data.
+This workshop uses the package `sf` ("simple features"). This package works with "spatial dataframes", which are a special type of dataframe that contains spatial information.
 
 ```{r}
-
+# Load the sf package (uncomment the `install.packages` line if not already installed)
 #install.packages("sf")
 library(sf)
 ```
 
-Let's read in the file. Note that `shp` is one of the main geospatial file types.
+Let's read in our first spatial file, which is contained in the "data" folder under `california_schools/california_schools.shp`. For this, we will use the `st_read()` function from the `sf` package:
 
 ```{r}
-
-schools_sf = st_read("../data/california_schools/california_schools.shp")
-
+schools_sf <- st_read("../data/california_schools.shp")
 #data source: https://gis.data.ca.gov/datasets/f7f818b0aa7a415192eaf66f192bc9cc
 ```
 
-The output you see here is metadata. We will discussmost of what is contained bit by bit throughout this workshop.
+The output we can see when we read in a spatial file is known as "metadata". We will discuss most of what is contained in the metadata bit by bit throughout this workshop.
 
-A note on filetypes: spatial data, like any other, is stored in a specific file type. The [ESRI shapefile](https://en.wikipedia.org/wiki/Shapefile) is the most widely used type of file format for storing geospatial (vector) data. It has a `.shp` file ending. This is the file we have and have read in and it is part of a collection of files, with endings `.shx`, `.dbf`, and `.prj` that need to be stored in the same location.
+💡 **Tip**: Spatial data is stored in specific file formats. The [ESRI shapefile](https://en.wikipedia.org/wiki/Shapefile) is the most widely used file format for storing geospatial (vector) data. This has a `.shp` file ending. This shapefile is part of a collection of files, with the same filename and different endings (`.shx`, `.dbf`, and `.prj`). These other files must be stored in the same location as the `.shp` file for the data to be read properly.
 
-## What Makes a Spatial Dataframe?
+Working with spatial dataframes is similar to working with base R dataframes. A spatial (or sf) dataframe retains all of the functionality of an R `data.frame`, extended with a `geometry` column and metadata about this column.
 
-Working with spatial dataframes is similar to working with base R dataframes. This allows for a more intuitive transition into geospatial analysis.
-
-A spatial (or sf) dataframe retains all of the functionality of an R `data.frame`, extended with a `geometry` column and metadata about this column.
-
-Let's explore some basic aspects of a spatial dataframe.
+Let's explore some basic aspects of a spatial dataframe:
 
 ```{r}
-
-#Look at the type of R objects an sf dataframe is 
+# Look at the type of R objects an sf dataframe is 
 class(schools_sf)
 
-#Look at the size of the dataframe
+# Look at the size of the dataframe
 dim(schools_sf) 
 
-#View the dataframe (and see its similarities to a base R dataframe)
+# View the dataframe
 View(schools_sf) 
-
 ```
 
 When referencing geospatial data (like the `schools_sf` dataframe):
 
--   Columns containing data are referred to as attributes .
+-   Columns containing data are referred to as **attributes**.
 
--   Rows are referred to as features.
+-   Rows are referred to as **features**.
 
 -   The `geometry` column provides us with spatial information for each feature.
 
-🔔 **Question**: What is an example of an attribute in the `schools_sf` dataframe?
+🔔 **Question**: What is an example of an **attribute** in the `schools_sf` dataframe?
 
 ------------------------------------------------------------------------
 
-# Identifying Geometry Types
+## 1.3 Identifying Geometry Types
 
 There are three main types of geometries. These are distinct spatial characteristics that can be associated with a spatial dataframe. They are points, lines and polygons:
 
 ![](https://datacarpentry.org/organization-geospatial/fig/dc-spatial-vector/pnt_line_poly.png)
 
-Let's look at some examples of the `geometry` column.
+Let's look at the `geometry` column.
 
 ```{r}
-
-#View the geometric information of this spatial dataframe 
+# View the geometric information of this spatial dataframe 
 st_geometry(schools_sf)
 ```
 
@@ -142,45 +130,38 @@ This summary includes:
 
 -   **Projected CRS** is covered in the next section
 
--   The geometries for the first 5 features are highlighted in red.
+-   The geometries for the first 5 features are highlighted in red
 
 ------------------------------------------------------------------------
 
-## 🥊 Challenge 1: Exploring More Complex Geometry Types
+### 🥊 Challenge 1: Exploring More Complex Geometry Types
 
-We will read in the California Counties shapefile; 'CaliforniaCounties.shp' and store it as a variable 'counties'.
+For this challenge, let's read in a new shapefile and store it as the object `counties`.
+
+1.  Read in the file `../data/california_counties.shp` (hint: follow the same filepath format as for the schools_sf object)
+2.  Look at the data: what information does this dataframe contain?
+3.  Identify the geometry type.
 
 ```{r}
 
-counties = st_read("../data/california_counties/california_counties.shp")
+# Step 1: Read in california_counties.shp and store as `counties`
+counties <- ______
+
+# Step 2: Look at the first few rows of the data
+
+
+# Step 3: Look at the geometry column and identify the geometry type
+
 
 ```
-
-1.  Look at the `class` and `dim` of the dataframe. `View` it as well.
-2.  Identify the names of 3 columns in the dataset.
-3.  Determine the geometry type.
 
 💡 **Tip**: Geometry types (`point`, `line`, `polygon`) have their multi-equivalents (`multiline`, `multipoint`, & `multipolygon`). These account for irregular or complex shapes, disconnected or intersecting boundaries.
-
-```{r}
-
-# YOUR CODE HERE
-
-#read in the counties shapefile
-
-#look at the first few rows of the data
-
-#identify the column names 
-
-#identify the geometry type
-
-```
 
 🔔 **Question**: Why would data based on county boundaries be best represented as a multipolygon?
 
 ------------------------------------------------------------------------
 
-# **Navigating Coordinate Reference Systems**
+## 1.4 Navigating Coordinate Reference Systems
 
 A coordinate reference system (CRS) is a system for associating a position on the surface of the Earth, with numerical coordinates.
 
@@ -192,7 +173,7 @@ Let's explore two distinct types CRS's:
 
 ------------------------------------------------------------------------
 
-## Geographic vs. projected CRS
+### 1.4.1 Geographic vs. projected CRS
 
 ![](../images/GCS_PCS.png)
 
@@ -218,7 +199,7 @@ Let's explore two distinct types CRS's:
 
 Various projection methods are used to preserve specific properties, such as area, shape, distance, or direction, depending on the application requirements. Let's explore some common CRS's.
 
-### CRS Codes
+### 1.4.2 CRS Codes
 
 CRS's are referenced by a common names and, in software, by numeric codes, often called EPSG codes.
 
@@ -227,87 +208,94 @@ CRS's are referenced by a common names and, in software, by numeric codes, often
 Let's see some instances where different CRS's are used:
 
 ```{r}
-
-#view the CRS of the spatial dataframe
+# View the CRS of the spatial dataframe
 st_crs(counties)
 ```
 
 The first line of output tells us that the name of this CRS is NAD83. The final line tells us that the EPSG code is 4269.
 
 ```{r}
-
-#view the CRS of the spatial dataframe
+# View the CRS of the spatial dataframe
 st_crs(schools_sf)
 ```
 
-The first line of output tells us that the name of this CRS is WGS 84. The final line tells us that the EPSG code is 4326.
+The first line of output tells us that the name of this CRS is WGS 84 / Pseudo-Mercator. The final line tells us that the EPSG code is 3857.
 
-### CRS Reprojections
+### 1.4.3 CRS Reprojections
 
 Let's reproject the CRS of our data such that they match and can be analyzed together. We will use the `st_transform` function to do this, and check if the CRS's are the same.
 
 ```{r}
+# First, get CRS of the spatial dataframe 
+st_crs(counties) # NAD83
+st_crs(schools_sf) # WGS84 / Pseudo-Mercator
 
-#First, get CRS of the spatial dataframe 
-st_crs(schools_sf) #WGS84
-st_crs(counties) #NAD83
-
-#Check if the CRS's are the same
-st_crs(schools_sf) == st_crs(counties) 
-
+# Check if the CRS's are the same
+st_crs(counties) == st_crs(schools_sf)
 ```
 
 We can see that the CRS's of our two objects don't match. We can use the `st_transform` function to change the CRS of one of our objects.
 
 ```{r}
-
-#Change the CRS of the schools spatial dataframe to a different CRS based on a known EPSG code
+# Change the CRS of the schools spatial dataframe to a different CRS based on a known EPSG code
 schools_sf_4269 = st_transform(schools_sf, crs = 4269) 
 
 st_crs(schools_sf_4269)
 ```
 
-💡 **Tip**: If you don't know the EPSG code, you can set the CRS based on an existing spatial dataframe. In this case, we're setting the CRS based on the CRS of the `counties` object.
+💡 **Tip**: If you don't know the EPSG code, you can set the CRS based on an existing spatial dataframe. In this case, we're setting the CRS based on the counties dataframe.
 
 ```{r}
-
-# change the CRS of the schools spatial dataframe to match the counties dataframe
+# Change the CRS of the schools spatial dataframe to match the counties dataframe
 schools_sf_4269 = st_transform(schools_sf, crs=st_crs(counties))
-
 ```
 
 ------------------------------------------------------------------------
 
-# Creating Spatial Dataframes
+## 1.5 Creating Spatial Dataframes
 
-So far, we've dealt with 'preformatted' data, that comes as a spatial dataframe already. Let's work on creating a spatial dataframe, including assigning CRS's.
+So far, we've dealt with 'preformatted' data, that comes as a spatial dataframe already. But we can also *create* a spatial dataframe!
 
-You may have spreadsheet data that needs to be converted into a spatial dataframe. Spreadsheet data, like data saved in a .csv file format, can be transformed in to a spatial dataframe given 2 pieces of information:
+```{r}
+# Read in a CSV file containing information on schools in Alameda county
+alameda_schools_df <- read.csv("../data/alameda_schools.csv")
 
--   Columns that specify the geometry (e.g. point coordinates) associated with each feature.
+# Examine the contents of the dataframe
+head(alameda_schools_df)
+```
 
--   The CRS of the data.
+This dataframe does *not* include a `geometry` column because it was read from a non-spatial CSV file. This means that it is not currently in the spatial `sf` format:
+
+```{r}
+class(alameda_schools_df)
+```
+
+Non-spatial data from a spreadsheet (such as a CSV) can be transformed in to a spatial dataframe with just 2 pieces of information:
+
+-   Columns that specify the geometry (e.g. point coordinates) associated with each feature: in this case, the columns `X` and `Y`
+
+-   A CRS for the data: we can choose this for ourselves.
 
 With this information, we can use the function `st_as_sf` to transform a spreadsheet data into an `sf` spatial dataframe.
 
 ```{r}
 
-#read in a CSV file containing information on schools in Alameda county
-alameda_schools_df <- read.csv("../data/alameda_schools/alameda_schools.csv")
+# Convert the .csv into a spatial dataframe and set the CRS of the dataframe
+alameda_schools_sf <- st_as_sf(alameda_schools_df, 
+                               coords = c('X','Y'), # Column names containing location data
+                               crs = 4326) # CRS of the data
 
-#view the contents of the dataframe
-View(alameda_schools_df)
+# Check the class of the dataframe
+class(alameda_schools_sf)
 ```
+
+The resulting dataframe `alameda_schools_sf` is now a spatial dataframe ("sf")! If we look at the contents of the dataframe, we can see that the columns `X` and `Y` have been replaced by a `geometry` column.
 
 ```{r}
-
-#convert the .csv into a spatial dataframe and set the CRS of the dataframe
-alameda_schools_sf <- st_as_sf(alameda_schools_df, 
-                       coords = c('X','Y'), #column names containing location data
-                       crs = 4326) #known CRS of the data 
+head(alameda_schools_sf)
 ```
 
-# Saving Spatial Dataframes
+## 1.6 Saving Spatial Dataframes
 
 It's helpful to be able to save data, especially if it has been made into a spatial dataframe or transformed as we did here, in a format that streamlines continued manipulation and analysis.
 
@@ -315,101 +303,117 @@ The `st_write()` function is used to save spatial dataframes in the available fi
 
 ```{r}
 
-# Save to shapefile, deleting existing file if present
-st_write(alameda_schools_sf, "../data/alameda_schools/alameda_schools.shp") 
+# Save to shapefile
+st_write(alameda_schools_sf,                            # Object
+         "../data/alameda_schools.shp", # Filepath
+         #delete_dsn = TRUE                             # Replace existing version of this file (if applicable)
+         )                             
 ```
 
 Note that this command creates an .shp file, and that several auxiliary files (.dbf, .prj, .shx) are also created. These auxiliary files must be retained in the same folder as the .shp file.
 
-Other geospatial file types include [.geojson](https://geojson.org/) or .[gpkg](https://www.geopackage.org/).
+Other geospatial file types include [.geojson](https://geojson.org/) or .[gpkg](https://www.geopackage.org/). We can save in one of these other file formats simply by changing the file ending.
+
+```{r}
+
+# Save to geopackage
+st_write(alameda_schools_sf,                             # Object
+         "../data/alameda_schools.gpkg", # Filepath
+         #delete_dsn = TRUE                              # Replace existing version of this file (if applicable)
+         )                             
+```
 
 ------------------------------------------------------------------------
 
-# Plotting Geospatial Data
+# Part 2: Geospatial Data Visualization
 
 One of the most powerful characteristics of geospatial data is our ability to create spatial visualizations of attributes. This can reveal spatial patterns such as **clusters**, and spatial relationships such as **proximity**.
 
-We'll start off using the basic `plot` function. This plots functionally all the data in the dataset.
+## 2.1 Plotting Geometries
+
+We'll start off using the basic `plot` function.
 
 ```{r}
 
-#plot the schools dataset
+# Plot the schools_sf dataframe
 plot(schools_sf) 
 ```
 
-⚠️ **Warning**: It's recommended to plot the `$geometry` column of spatial data, and not the entire dataset. The latter can take a lot of time to execute particularly for larger datasets.
+⚠️ **Warning**: The default `plot` function attempts to plot all the data in the dataset at once! It's recommended to plot the `$geometry` column of spatial data, and not the entire dataset. The latter can take a lot of time to execute particularly for larger datasets.
 
-## Visualizing Geometries
-
-Let's examine the geometry of our `schools_sf` dataframe.
+Let's examine just the geometry of our `schools_sf` dataframe:
 
 ```{r}
 
-#plot the grometry column of the schools_sf dataframe in purple
+# Plot the geometry column of the schools_sf dataframe
 plot(schools_sf$geometry) 
 ```
 
-🔔 **Question**: Based on this plot, can you tell what type of geometry the `schools_sf` dataframe represents (point, line, or polygon)?
+🔔 **Question**: Just based on this plot, can you tell what type of geometry the `schools_sf` dataframe represents (point, line, or polygon)?
 
 Now let's do the same for our `counties`:
 
 ```{r}
 
-#plot the grometry column of the school_sf dataframe
+# Plot the geometry column of the counties dataframe
 plot(counties$geometry) 
 ```
 
 🔔 **Question**: What type of geometry does our `counties` dataframe represent (point, line, or polygon)?
 
-## Overlay Plotting
-
-Map overlays are a powerful method for visualizing spatial data, particularly across multiple datasets
-
-We can create these with `plot`. The `add=TRUE` argument allows you to 'add' maps on top of one another.
-
-Before we create the overlay plot, we should check that the CRS's of our dataframes match!
+We can also overlay these two geometries in the same plot by using the `add = TRUE` argument.
 
 ```{r}
+# Run these two lines together
+plot(counties$geometry)
+plot(schools_sf$geometry, add=TRUE)
+```
 
-#verify that the two datasets are in the same CRS
+This didn't work! What happened?
+
+Before we create the overlay plot, we should always check that the CRS of our dataframes match!
+
+```{r}
+# Check if the two datasets are in the same CRS
 st_crs(schools_sf) == st_crs(counties) 
 ```
 
-They don't match! Recall we created a version of the `schools_sf` dataframe that has the same CRS as the `counties` dataframe.
+They don't match! This is why the schools_sf layer didn't display on our plot. If two spatial dataframes have different CRS, they are often being mapped on totally different scales and cannot be plotted together. We can fix this by putting both layers in the same CRS.
+
+Recall we already created a version of the schools_sf dataframe that has the same CRS as the counties dataframe!
 
 ```{r}
-
-#verify that the two datasets are in the same CRS
+# Check if the two datasets are in the same CRS
 st_crs(schools_sf_4269) == st_crs(counties) 
 ```
 
-⚠️ **Warning**: plotting data with mismatched CRS's can be a simple, common error. Build a habit of always checking the CRS of a dataset before doing any analysis, including plotting.
+⚠️ **Warning**: Plotting data with mismatched CRS can be a simple, common error. Build a habit of always checking the CRS of a dataset before doing any analysis, including plotting.
 
-Let's create the overlay plot:
+Now, let's create the overlay plot:
 
 ```{r}
-
-#plot the two geometries together. Run the two lines together
+# Run these two lines together
 plot(counties$geometry)
 plot(schools_sf_4269$geometry, add=TRUE)
-
 ```
 
 ------------------------------------------------------------------------
 
-# Improving Data Visualization with Thematic Maps
+## 2.2 Thematic Maps
 
 So far, we have simply plotted the location of features/observations in space.
 
-The goal of a thematic map is to layer information aboutthe spatial distribution of a variable onto a map, allowing us to identify trends, outliers, and the like.
+The goal of a thematic map is to layer information about the spatial distribution of a variable onto a map, allowing us to identify trends, outliers, etc.
 
-Thematic maps use color to quickly and effectively convey information. For example, maps use brighter or richer colors to signify higher values, and leverage cognitive associations such as mapping water with the color blue. These maps visually communicate spatial patterns, enabling intuitive interpretation and comparison of patterns and data distributions.
+Thematic maps use **color** to quickly and effectively convey information. For example, maps use brighter or richer colors to signify higher values, and leverage cognitive associations such as mapping water with the color blue. These maps visually communicate spatial patterns, enabling intuitive interpretation and comparison of patterns and data distributions.
 
-Let's compare data on median age, visualized through a standard bar plot vs a thematic plot.
+Let's compare two visualizations of median age by county: 1) a standard bar plot, and 2) a thematic map. For this, we'll load the `ggplot()` package for more sophisticated data visualization.
 
 ```{r}
 
-#load the library
+# Load the ggplot2 package (uncomment the `install.packages` line if not already installed)
+
+#install.packages("ggplot2")
 library(ggplot2)
 ```
 
@@ -417,46 +421,33 @@ Visualize the median age per county as a barplot using ggplot:
 
 ```{r}
 
-#create a plot of the MED_AGE per county, save as a variable p1
-p1 <- ggplot(counties, aes(x = NAME, y = MED_AGE)) +
-  geom_col() + #plot the data as bar plots 
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # adjust the angle of the x-axis text for easier visualization
-p1
+# Plot of MED_AGE by county
+
+ggplot(data = counties) +                                   # Initialize ggplot using counties dataframe
+  geom_col(aes(x = NAME, y = MED_AGE)) +                    # Plot the data as bar plot 
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Adjust the angle of the x-axis text for easier visualization
 ```
 
 🔔 **Question**: Alameda and San Francisco county neighbor one another. How easy is it to relate the median ages of the two counties using this bar plot?
 
-Visualizing the data using this plot emphasizes numerical relationships, while a thematic map places additional emphasis on the geographic distribution of data. Herein lies a a key benefit of geospatial analyses.
-
-There are three main techniques for improving data visualization via thematic maps:
-
-A. Color palettes
-
-B. Data transformations
-
-C. Classification schemes
-
-Let's use these methods on some thematic maps with `ggplot`:
-
-## A. Color Palettes
+Visualizing the data using this plot emphasizes numerical relationships, while a thematic map places additional emphasis on the geographic distribution of data. Herein lies one of the key benefits of geospatial analyses.
 
 Let's use `ggplot2`'s `geom_sf()` function to visualize the median age per county on a map.
 
 ```{r}
-
-p2 <- ggplot(counties, aes(fill = MED_AGE)) + 
-  geom_sf() +  # tells ggplot that geographic data are being plotted
-  #scale_fill_viridis_c() +
-  theme_minimal() + 
-  labs(title = "Median Age per County")
-p2
+ggplot(counties) +              # Initialize ggplot using counties dataframe
+  geom_sf(aes(fill = MED_AGE))  # Use median age for fill color
 ```
 
-There are three main types of color palettes (or color maps), each of which has a different purpose: diverging, sequential, and qualitative.
+🔔 **Question**: What patterns do you observe in this plot? Are low and high median ages clustered in certain parts of the state?
+
+## 2.3 Color Palettes
+
+There are three main types of color palettes, each of which has a different purpose: diverging, sequential, and qualitative.
 
 ![](http://www.gnuplotting.org/figs/colorbrewer.png)
 
-💡 **Tip**: Sites like [ColorBrewer](https://colorbrewer2.org/#type=sequential&scheme=Blues&n=3) let's you play around with different types of color maps.
+💡 **Tip**: Sites like [ColorBrewer](https://colorbrewer2.org/#type=sequential&scheme=Blues&n=3) let you play around with different types of color maps.
 
 Let us visualize the same data using all 3 types of palettes.
 
@@ -464,479 +455,295 @@ Let us visualize the same data using all 3 types of palettes.
 library(RColorBrewer)
 ```
 
-To see the names of all color palettes available, try the following command. You may need to enlarge the output image.
+To see the names of all color palettes available, try the following command. You may need to enlarge the output image to see the palette names.
 
 ```{r}
 RColorBrewer::display.brewer.all()
 ```
 
-1.  **Diverging color palette** - a "diverging" set of colors are used to emphasize mid-range values as well as extremes.
+Let's visualize each of these three color palettes with our counties dataset.
+
+1.  **Sequential color palettes** use a single or multi-color hue to emphasize differences in order and magnitude.
+
+```{r}
+
+seq_plot <- ggplot(data = counties) +                     # Initialize ggplot
+  geom_sf(aes(fill = MED_AGE)) +                          # Use median age for fill color
+  scale_fill_gradientn(colors = brewer.pal(9,"Greens")) + # *Sequential* greens color palette
+  theme_minimal() +                                       # Add theme
+  labs(title = "Median Age per County")                   # Add title
+  
+seq_plot
+```
+
+This is considered a `proportional color map` because the colors are linearly scaled to the data values. The legend has a continuous color ramp rather than discrete data ranges.
+
+2.  **Diverging color palettes** use a "diverging" set of colors to emphasize the distribution of values relative to some midpoint value.
 
 [Plot data with a diverging palette]{.underline}
 
 ```{r}
 
-Div_plot <- ggplot(counties, aes(fill = MED_AGE)) + 
-  geom_sf() +
-  scale_fill_gradientn(colors = brewer.pal(11, "RdBu")) + # Diverging red-blue color palette
-  theme_minimal() + 
-  labs(title = "Median Age per County")
+div_plot <- ggplot(data = counties) +                     # Initialize ggplot
+  geom_sf(aes(fill = MED_AGE)) +                          # Use median age for fill color
+  scale_fill_gradientn(colors = brewer.pal(11, "RdBu")) + # *Diverging* red-blue color palette
+  theme_minimal() +                                       # Add theme
+  labs(title = "Median Age per County")                   # Add title
 
-Div_plot
+div_plot
 ```
 
-This is considered a `proportional color map` because the colors are linearly scaled to the data values. The legend has a continuous color ramp rather than discrete data ranges.
+🔔 **Question**: What are possible advantages of the diverging color scheme over the sequential color scheme? What are possible disadvantages?
 
-2.  **Sequential color palette** - usually uses a single or multi-color hue to emphasize differences in order and magnitude, where darker colors typically mean higher values.
-
-Let's plot the MED_AGE counties data using a sequential palette.
-
-[Plot data with a sequential palette]{.underline}
+3.  **Qualitative color palettes** use a contrasting set of colors to identify distinct categories and avoid quantitative significance
 
 ```{r}
 
-Seq_plot <- ggplot(counties, aes(fill = MED_AGE)) + 
-  geom_sf() +
-  scale_fill_gradientn(colors = brewer.pal(9,"Greens")) + # Sequential greens color palette
-  theme_minimal() + 
-  labs(title = "Median Age per County")
-  
-Seq_plot
-```
-
-🔔 **Question**: Do you see any preliminary patterns in this map?
-
-3.  **Qualitative color palette** - a contrasting set of colors to identify distinct categories and avoid implying quantitative significance.
-
-[Plot the data]{.underline}
-
-```{r}
-
-#plot the data
-Qual_plot <- ggplot() +
-  #since we are using a qualitative color palette, we cannot plot quantitative data
+qual_plot <- ggplot() +
   geom_sf(data = counties, aes(fill = MED_AGE)) + 
-  scale_fill_manual(values = brewer.pal(8, "Pastel2")) + #Qualitative pastel color pallette
+  scale_fill_manual(values = brewer.pal(8, "Pastel2")) + # *Qualitative* pastel color palette
   theme_minimal() +
   labs(title = "Selected Counties")
-Qual_plot
+
+qual_plot
 ```
 
 🔔 **Question**: Why is this not working?
 
-Visualizing a continuous variable with a qualitative plot does not work. We would need a qualitative category. Here's what it would look like with a qualitative category:
+Visualizing a continuous variable with a qualitative plot [does not work]{.underline}. We need to use a qualitative category instead. Here's what it would look like with a qualitative category - in this case, Combined Statistical Area:
 
 ```{r}
 
 #plot the data
-Qual_plot <- ggplot() +
+qual_plot <- ggplot() +
   #since we are using a qualitative color palette, we cannot plot quantitative data
-  geom_sf(data = counties, aes(fill = QUAL_CAT)) + 
+  geom_sf(data = counties, aes(fill = METRO)) + 
   scale_fill_manual(values = brewer.pal(8, "Pastel2")) + #Qualitative pastel color pallette
   theme_minimal() +
   labs(title = "Selected Counties")
-Qual_plot
+qual_plot
 ```
 
-Remembers, as a best practice, a **qualitative** color palette should not be used with **quantitative** data and vice versa.
+⚠️ **Warning**: It is always important to choose the correct color palette for your thematic map. In particular, a qualitative color palette should almost never be used for continuous quantitative data.
 
 ------------------------------------------------------------------------
 
-## 📝 Poll - RGeo 1: Choosing Appropriate Color Palette
+### 📝 Poll: Choosing the Appropriate Color Palette
 
-Have another look at the schools_sf database. Which types of color palettes would most accurately represent the following data?
+Which color palette would most effectively represent the following variables?
 
-```         
-1.  The percent of students that are mixed race (`MRpct`)
-2.  Whether or not the school is a charter school or not (`Charter`)
-```
+1.  The percent of students that are socioeconomically disadvantaged
+2.  Whether or not a given school is a charter school (Y/N)
+3.  Change in total enrollment between 2019 and 2024
 
 ------------------------------------------------------------------------
+
+## 2.4 Data Transformation
 
 There are two major challenges when creating thematic maps:
 
 1.  Our eyes are drawn to the color of larger areas or linear features, even if the values of smaller features are more significant.
 
-2.  The range of data values is rarely evenly distributed across all observations, so the colors can be misleading.
+2.  The range of data values is rarely evenly distributed across all observations, so colors can be misleading.
 
-Selecting the appropriate color palette can help mitigate these challenges. Sometimes, this alone is not enough. Transforming data can improve the way data values are associated with colors.
+Selecting the appropriate color palette can help mitigate these challenges. Sometimes, this alone is not enough. Transforming data can improve the way data values are associated with colors. Let's explore three different methods for visualizing the spatial distribution of people that identify as multi-racial: **counts**, **densities**, and **proportions**.
 
-------------------------------------------------------------------------
+**A. Visualizing Data as Counts**
 
-## Transforming Count Data
-
-Data aggregation is where individual-level data e.g. data from people, households, or businesses are summarized into higher geographic levels such as states, counties, or census tracts
-
-Aggregated data such as counts (e.g. the total population in a state) presents a broader overview
-
-To make these counts more comparable across regions, especially those that differ greatly in size, data is transform into normalized variables.
-
-Normalized variables including densities, proposrtions, or ratios, provide a standardized basis for comparison, allowing for more meaningful understanding of trends and patterns
-
-Let's transform **count** data using **densities**, **proportions**, and **ratios** and visualize the data using `tmap`:
-
-**A. Visualizing data as Counts**
-
-Count data are individual-level data (e.g. population), aggregated by feature (e.g. county)
-
--   e.g. population within a county
-
-[plot count data using `tmap`]{.underline}
+Count data are individual-level data (e.g. population), aggregated by feature (e.g. county). These plots emphasize the areas with the largest absolute counts.
 
 ```{r}
 
-# Map of individuals who identify with multiple races
-Count_plot <- tm_shape(counties) +
-  tm_polygons(col='MULT_RACE', alpha=0.5, #alpha specifies the level of transparency
-              palette="Greens", #syntax for specifying color pelettes with tmap plots
-              title = "number of multi-race individuals")
+count_plot <- ggplot(data = counties) +                     # Initialize ggplot
+  geom_sf(aes(fill = MULTI_RACE)) +                         # Fill color based on MULTI_RACE
+  scale_fill_gradientn(colors = brewer.pal(9, "Greens")) +  # Set color gradient
+  theme_minimal() +                                         # Set theme
+  labs(title = "Multi-Racial Population (Count)")           # Add title
 
-
-Count_plot
+count_plot
 ```
 
-The data is aggregated by county boundaries and shows the number of people who identify with multiple races per county.
-
-🔔 **Question**: What happens if there are more people in a county?
-
-Let's look at the distribution of the data using a histogram.
-
-[plotting data distribution via a histogram]{.underline}
-
-```{r}
-
-#plotting the distribution of people who identify with multiple races per county
-hist(counties$MULT_RACE,
-     breaks = 40, # number of bins that the range of values is divided into
-     main = 'number of multi-race individuals') #title 
-```
-
-The distribution shows that many people fall on the lowest end of the distribution, and there seems to be an outlier at the highest end.
-
-Such an uneven distribution is not accurately represented using count data.
-
-The basic cartographic rule is that when mapping data for areas that differ in size you rarely map counts since those differences in size make the comparison less valid or informative.
-
-Data transformations overcome these limitations of count data.
+🔔 **Question**: If our goal is to identify the distribution of multi-racial individuals, what might be the problem with mapping total counts?
 
 **B. Visualizing data as Densities**
 
-Density data is counts aggregated by feature (county) and normalized by feature area
+Density data is counts aggregated by feature (county) and [normalized]{.underline} (divided) by the geographia area of the feature.
 
--   e.g. number of individuals who identify with multiple races per square mile within a county
-
-[Transform data based on area]{.underline}
+For example, we could look at the population per square mile within a county:
 
 ```{r}
 
-#View the data to identify column containing county area
-colnames(counties)
-# the "SQ_MILES" column contains the area of each county in square miles
+# Create a new column that contains the multi_race density data
+counties$MULTI_RACE_DENSITY <- counties$MULTI_RACE/counties$AREA_SQMI
 
-#create a new column that contains the multi_race density data
-counties$MULT_RACE_SQ_MILE<-counties$MULT_RACE/counties$SQ_MI
+density_plot <- ggplot(data = counties) +                               # Initialize ggplot
+  geom_sf(aes(fill = MULTI_RACE_DENSITY)) +                             # Fill color based on MULTI_RACE
+  scale_fill_gradientn(colors = brewer.pal(9, "Greens")) +              # Set color gradient
+  theme_minimal() +                                                     # Set theme
+  labs(title = "Multi-Racial Population (Density)")                     # Add title
 
-Density_plot<- tm_shape(counties) +
-  tm_polygons(col='MULT_RACE_SQ_MILE', alpha=0.5,
-              palette="Greens",
-              title = "number of multi-race individuals per square mile")
-Density_plot
+density_plot
 ```
 
-🔔 **Question**: What are some changes we can make to the map that may highlight certain trends better
+🔔 **Question**: If our goal is to identify the distribution of multi-racial individuals, what might be the problem with mapping densities?
 
-[Change the tmap color palette and translucency]{.underline}
-
-```{r}
-
-Density_plot_2<- tm_shape(counties) +
-  tm_polygons(col='MULT_RACE_SQ_MILE', alpha=0.8,
-              palette="YlOrRd", #recall that sequential color palettes emphasize differences in order and magnitude
-              title = "number of multi-race individuals per square mile")
-Density_plot_2
-```
-
-Remember that is can be helpful to visualize plots side-by-side. The `tmaptools` package has the `tmap_arrange()` function that allows us to do this.
-
-[visualize tmap plots side-by-side]{.underline}
-
-```{r}
-
-#install.packages("tmaptools")
-library(tmaptools)
-
-# Assuming you have tmap plots named plot1, plot2, plot3, and plot4
-Density_plot_combined <- tmap_arrange(Density_plot, Density_plot_2, ncol = 2)
-
-Density_plot_combined 
-```
-
-🔔 **Question**: How can you easily view the county(ies) that have a high number of individuals that identify with multiple races?
-
-```{r}
-ttm()
-
-Density_plot
-```
+**C. Visualizing Data as Percents/Proportions**
 
 Normalizing data via densities makes the data more accurate in some cases and more comparable across regions of different sizes. Normalizing data via percentages allows for a direct comparison of the relative contribution, irrespective of size or population.
 
-**C. Visualizing data as Percents/Proportions**
-
-**Proportions / Percentages data** represents data in a specific category divided by the total value across all categories
-
-*e.g. number of individuals that identify with multiple races, as a percent of the total county population*
-
-Now you try it! Plot the 'MULT_RACE counties data as a percent
-
--   What should you divide `counties$MULT_RACE` to convert it to a percent?
--   Hint: use the total population in 2012
+**Percent/Proportion data** represents data in a specific category divided by the total value across all categories: for example, the number of multi-racial individuals divided by the total population.
 
 ```{r}
 
 #create a new column that contains the multi_race proportion data
-counties$MULT_RACE_PERC<-counties$MULT_RACE/counties$POP2012 *100
+counties$MULTI_RACE_PERCENT <- 100*counties$MULTI_RACE/counties$POP
 
-Percent_plot <- tm_shape(counties) +
-  tm_polygons(col='MULT_RACE_PERC', alpha=0.5,
-              palette="YlOrRd",
-              title = "number of multi-race individuals per total county percent")
-Percent_plot
+percent_plot <- ggplot(data = counties) +                               # Initialize ggplot
+  geom_sf(aes(fill = MULTI_RACE_PERCENT)) +                             # Fill color based on MULTI_RACE
+  scale_fill_gradientn(colors = brewer.pal(9, "Greens")) +              # Set color gradient
+  theme_minimal() +                                                     # Set theme
+  labs(title = "Multi-Racial Population (Percent)")                     # Add title
+
+percent_plot
 ```
 
-## 🥊 Challenge 2: **Visualizing data as Ratios**
+### 🥊 Challenge 2: **Visualizing Race by County**
 
-**D. Visualizing data as Ratios**
-
-**Rates / Ratios data** represent a value in one category divided by value in another category
-
-1.  Create a new variable "MULT_to_OTHER" that is the ratio of the number of individuals that identify with multiple races to the number of individuals who identify as "OTHER"
-2.  plot a histogram to see the distribution
-3.  create a plot, named Ratio_plot, of this distribution using `tmap`, and a diverging color palette
-4.  Visually identify the county with the highest ratio
-5.  combine this and the three previous plots onto one grid
-
-```{r}
-# YOUR CODE HERE
-
-```
-
-------------------------------------------------------------------------
-
-## 🎬 Demo:
-
-Often enough, you may want to create a thematic map that requires more colors than are contained within a predefined color palette, like Pastel2 which has a maximum of 8, or you may just want to create your own.
-
-R has a list of colors with their associated color codes that can be manually used.
-
-Let's use this example to plot the different types of school (n=14) using a manual color palette.
-
-[Manually defining a set of colors for a qualitative plot]{.underline}
+Now it's your turn! Using the method shown above, plot the distribution of another race group of your choice from the `counties` dataset using all three methods: 1) count, 2) density, and 3) percent.
 
 ```{r}
 
-#plot the different types of schools using a manual color palette
-schools_plot_2 <- ggplot() +
-  geom_sf(data = schools_sf, aes(color = SchoolType)) +  # Use color aesthetic for points
-  scale_color_manual(values = c("#e41a1c", "#377eb8", "#4daf4a", "#ff7f00", "#a65628", "#984ea3", "#999999", "#e41a1c", "#377eb8", "#4daf4a", "#ff7f00", "#a65628", "#984ea3", "#999999")) +  # Custom palette with 14 colors
-  theme_minimal() +
-  labs(title = "School Type")
-print(schools_plot_2)
+
 ```
 
-⚠️ **Warning**: plotting qualitative data using readily available color palettes can become limited because each palette contains a predefined number of colors. Also, using too many colors may be overwhelming to the viewing and demphasize important aspects.
+Describe any patterns you notice in the chat!
 
 ------------------------------------------------------------------------
 
-# Classification schemes
+## 2.5 Classification Schemes
 
 Another way to make more meaningful maps is to improve the way in which data values are associated with colors.
 
 The common alternative to the proportional color maps we've created thus far is to use a **classification scheme** to create a **graduated color map**.
 
-A **classification scheme** is a method for binning continuous data values into multiple classes (often 4-7) and then associate those classes with the different colors in a color palette.
+A **classification scheme** is a method for binning continuous data values into multiple categories and then associating each category with a different color in a color palette.
 
-The commonly used classification schemes include equal interval, quantiles, natural breaks, heads/tails, and manual schemes. The `?tm_polygons` documentation, under the `style` argument provides keywords names for the different classification styles.
+Commonly used classification schemes include equal interval, quantiles, and natural breaks. Let's explore each of these three classifications schemes for population density by county!
 
-Let's explore each classifications schemes:
-
-[Load libraries]{.underline}
+For ease of use, we're going to use a different mapping package known as `tmap`, which makes exploring different classifications a bit more straightforward. The format of this package is similar to `ggplot2`, but differs in its specific syntax.
 
 ```{r}
-
-library(here) #provides a here() command that builds file paths from the project directory
-library(sf)
+# install.packages("classInt")
 library(tmap)
 ```
 
-[Load in datasets]{.underline}
+**A. Equal Intervals**
+
+Equal-interval classification separates data into equal-size data ranges (e.g., values within 0-10, 10-20, 20-30, etc.)
+
+-   Advantages:
+    -   Works well for data spread across the entire range of values
+    -   Easily understood by map readers
+-   Disadvantages:
+    -   Heavily influenced by skewed data and outliers, which may result in one or more of the bins having no observations
+
+Let's look at a map of county population based on equal intervals. Note the differences between `tmap` and `ggplot2` syntax:
 
 ```{r}
-
-#read in the shapefile
-counties = st_read(here("data",
-                              "california_counties", 
-                              "CaliforniaCounties.shp"))
-
-#read in the schools_sf shapefile using a slightly different syntax
-schools_sf = st_read(here("data",
-                               "California_Schools_2019-20",
-                               "SchoolSites1920.shp"))
-
-
-#data sources: 
-# counties: https://gis.data.ca.gov/datasets/8713ced9b78a4abb97dc130a691a8695 
-# schools_sf: https://gis.data.ca.gov/datasets/f7f818b0aa7a415192eaf66f192bc9cc
+equal_plot <- tm_shape(counties) +                   # Initialize tmap object
+  tm_polygons(col = 'POP',                           # Name of column for fill color
+              style = "equal",                       # Classification scheme
+              palette = "YlOrRd",                    # Color palette
+              title = "Population (Equal Interval)") # Title
+equal_plot
 ```
 
-**A. Classifying data based on Equal intervals** (e.g. **pretty)**
+🔔 **Question**: What are the limitations of this approach for conveying useful information about county population?
 
-An Equal-interval classification segments data into equal-size data ranges (e.g., values within 0-10, 10-20, 20-30, etc.)
+**B. Quantiles**
 
--   pros:
-    -   best for data spread across the entire range of values
-    -   easily understood by map readers
--   cons:
-    -   avoid if you have highly skewed data or a few big outliers because one or more of the bins may have no data observations
+Instead of creating equally-sized bins, a quantile scheme distributes an equal *number of observations* into each bin. For example, if we had 15 observations and 3 bins, each bin would get 5 observations (low, medium, and high)
 
-🔔 **Question**: Do you recall what transforming count data into density data means?
+-   Advantages:
+    -   Ensures that all map colors are used, resulting in more visually effective displays of skewed data
+    -   Provides a relative indication of where observations fall within the overall distribution
+-   Disadvantages:
+    -   Because quantiles are based solely on number of observations, different categories may have narrow or wide ranges of values
+    -   Quantile categories necessarily obscure outliers, which may be valuable to distinguish
 
 ```{r}
-
-#create a new column that contains the multi_race density data
-counties$POP12_SQMI<-counties$POP2012/counties$SQ_MI
+quantile_plot <- tm_shape(counties) +                   # Initialize tmap object
+  tm_polygons(col = 'POP',                              # Name of column for fill color
+              style = "quantile",                       # Classification scheme
+              palette = "YlOrRd",                       # Color palette
+              title = "Population (Quantile)")    # Title
+quantile_plot
 ```
 
-[plot data using the equal interval classification scheme]{.underline}
+🔔 **Question**: What are the limitations of this approach for conveying useful information about county population? (Hint: look at the relative ranges of the lowest and highest categories)
+
+**C. Natural Breaks**
+
+Natural Breaks classification methods minimize within-class variance and maximize between-class differences. Don't worry too much about the mathematical nuances here; the bottom line is that this method identifies the biggest "gaps" in the distribution so values that are more similar are grouped together within the same bin. We will look at the "fisher" natural breaks method - other common natural breaks methods include "jenks".
 
 ```{r}
-tmap_mode('plot')
-# Plot population density - mile^2
-pretty_clasi_plot<- tm_shape(counties) + 
-  tm_polygons(col = 'POP12_SQMI',
-              alpha = 0.9,
-              style = "pretty", #style of the break, pretty = equal interval
-              title = "Population Density per mi^2 Equal-Interval Scheme")
-
-pretty_clasi_plot
+fisher_plot <- tm_shape(counties) +                   # Initialize tmap object
+  tm_polygons(col = 'POP',                            # Name of column for fill color
+              style = "fisher",                       # Classification scheme
+              palette = "YlOrRd",                     # Color palette
+              title = "Population (Natural Breaks)")  # Title
+fisher_plot
 ```
 
-In instances where proportions don't make the data more representative, we can look to other classification schemes.
+This map shares some advantages *and* disadvantages of the equal interval and quantile methods.
 
-**B. Classifying data based on Quantiles**
-
-A quantile scheme distributes an equal number of observations in each bin
-
--   pros:
-
-    -   looks nice, because it best spreads colors across full set of data values
-    -   thus, it's often the default scheme for mapping software
-
--   cons:
-
-    -   the bin ranges are based on the number of observations, not on the data values
-    -   thus, different classes can contain very similar or very different data values
-
-We'll now plot the 'POP12_SQMI' counties data using the quantile style
-
-🔔 **Question**: What should you change `"pretty"` to?
-
--   Hint: you can take a look at the `?tm_polygons` documentation to find the correct syntax
-
-[plot data using the quantile classification scheme]{.underline}
-
-```{r}
-
-tmap_mode('plot')
-# Plot population density - mile^2
-quant_clasi_plot<- tm_shape(counties) + 
-  tm_polygons(col = 'POP12_SQMI',
-              alpha = 0.9,
-              style = "quantile", #style of the break
-              title = "Population Density per mi^2 Quantile Scheme") 
-quant_clasi_plot
-```
-
-**C. Classifying data based on Natural breaks**
-
-Natural breaks minimizes within-class variance and maximize between-class differences. (Don't worry too much about the nuances of each break, the goal is mostly to show you that you have many options).
-
--   pros:
-    -   great for exploratory data analysis, because it can identify natural groupings
--   cons:
-    -   class breaks are best fit to one dataset, so the same bins can't always be used for multiple years
-
-[plot data using one type of natural break (fisher)]{.underline}
-
-```{r}
-tmap_mode('plot')
-# Plot population density - mile^2
-nat_clasi_plot <- tm_shape(counties) + 
-  tm_polygons(col = 'POP12_SQMI',
-              style = "fisher", #style of the break
-              alpha = 0.9,
-              title = "Population Density per mi^2")
-nat_clasi_plot
-```
-
-Note the range of each bin.
+-   Advantages:
+    -   Ensures that all map colors are used, resulting in more visually effective displays of skewed data
+    -   Effectively highlights observations
+-   Disadvantages:
+    -   Different categories may have narrow or wide ranges of values
+    -   Categories may be more difficult for map readers to interpret
 
 **D. Classifying data Manually**
 
-user-defined classification schemes allow the user to manually set the breaks for the bins using the `breaks()` argument.
-
--   pros:
-    -   especially useful if you want to slightly change the breaks produced by another scheme
-    -   can be used as a fixed set of breaks to compare data over time
--   cons:
-    -   more work involved because breaks are made manually
-
-[plot data using a manual classification scheme]{.underline}
+If we aren't happy with any of these methods, one final option is to create our own manual categories. For example, we might want to better differentiate between counties with populations under 1 million:
 
 ```{r}
 
-man_clasi_plot <- tm_shape(counties) + 
-  tm_polygons(col = 'POP12_SQMI',
-              style = 'fixed',
-              breaks = c(0, 50, 100, 200, 300, 400, max(counties$POP12_SQMI)),
-              #labels = c('<50','50 to 100','100 to 200','200 to 300','300 to 400','>400'),
-              title = "Population Density per Square Mile Manual Scheme")
-man_clasi_plot
+manual_plot <- tm_shape(counties) +                  # Initialize tmap object
+  tm_polygons(col = "POP",                           # Name of column for fill color
+              style = "fixed",                       # Classification scheme
+              palette = "YlOrRd",                    # Color palette
+              # Manual breaks (including min of 0 and max based on maximum in dataset)
+              breaks = c(0, 250000, 500000, 750000, 1000000, max(counties$POP)),
+              title = "Population (Manual Breaks)")  # Title
+manual_plot
 ```
 
 ------------------------------------------------------------------------
 
-## 🥊 Challenge 3: Classifying data based on **Head/Tails**
+### 🥊 Challenge 3: Classifying Race by County
 
-**D.** Classifying data based on **Head/Tails**
-
-The heads/Tails scheme is tailored to data with a heavy-tailed distributions
-
-1.  search the `?tm_polygons` documentation to find the appropriate argument for a heads/tails classification
-
-2.  create a plot named `HeadsTails_clasi_plot` using a heads/tails scheme
-
-3.  create a combined variable named `combined_clasi_plots` that shows the 4 plots we've now created in pats A-D.
+For your final challenge, map the race percentage field you created in Challenge 2 using each of these classification methods. Which of these methods do you think is the most effective for displaying your variable?
 
 ```{r}
 
-# YOUR CODE HERE
+equal_plot2 <- _____
+
+quantile_plot2 <- _____
+
+fisher_plot2 <- _____
+
+manual_plot2 <- _____
+
 ```
-
-See the documentation `?classIntervals` or sources such as [Geocomputation with R](https://geocompr.robinlovelace.net/adv-map.html) ebook for more information on data classifications.
-
-Aso note that there are other mapping packages including
-
--   `mapview`: for a quick and easy interactive map
-
--   `leaflet`: for highly custom interactive maps that you can output and host on a website
-
--   `shiny`: for interactive R based applications that use leaflet maps
 
 ------------------------------------------------------------------------
 
 # Key Points
 
--   What defines a spatial dataframe is that each feature (row) in the dataset, and has an associated `geometry`column that encodes the location (a point, line or polygon) over which the data stored in the columns (attributes) is applicable.
--   There are various ways to project the complex surface of the earth results in different coordinate reference systems (CRS's). Knowing the CRS of your data and which CRS's are most applicable in your given context enables accurate data manipulation and integration.
+-   Spatial dataframe are similar to ordinary data frames, except that each feature (row) has an associated `geometry` column encoding a spatial dimension
+-   Spatial geometries consist of points, lines, and polygons, which represent different types of spatial observations
+-   Coordinate Reference Systems (CRS) provide various ways to project the complex surface of the earth into a two-dimensional map. Knowing the CRS of your data and which CRS is most applicable in your given context enables accurate data manipulation and integration.
 -   Visualizing spatial dataframes can reveal spatial patterns such as clusters, and spatial relationships such as proximity.
+-   Color palettes, data transformation, and classification schemes can all be used to enhance the communication of spatial information in thematic maps.
