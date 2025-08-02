@@ -5,6 +5,9 @@
 [![License: CC BY 4.0](https://img.shields.io/badge/License-CC_BY_4.0-lightgrey.svg)](https://creativecommons.org/licenses/by/4.0/)
 
 This repository contains the materials for D-Lab's R Geospatial Fundamentals workshop. 
+
+## Prerequisites
+
 We recommend attending [R Fundamentals](https://github.com/dlab-berkeley/r-fundamentals), [R Data Wrangling](https://github.com/dlab-berkeley/R-Data-Wrangling), and [R Data Visualization](https://github.com/dlab-berkeley/R-Data-Visualization) prior to this workshop.
 
 Check out D-Lab’s [Workshop Catalog](https://dlab-berkeley.github.io/dlab-workshops/) to browse all workshops, see what’s running now, and review prerequisites.
