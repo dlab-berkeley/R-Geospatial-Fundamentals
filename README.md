@@ -99,5 +99,5 @@ D-Lab offers a variety of R workshops, catered toward different levels of expert
 
 # Contributors
 
-Soliver Fusi
-Alex Ramiller
+- Soliver Fusi
+- Alex Ramiller
